@@ -1,28 +1,63 @@
 apply plugin: 'com.android.application'
 
 android {
+	// git branch username
+	def commitCount = "";
+	new ByteArrayOutputStream().withStream { os ->
+		def result = exec {
+			executable = 'git'
+			args = ['rev-list', '--count', 'HEAD']
+			standardOutput = os
+		}
+		commitCount = os.toString()
+	}
+
+	// git branch name
+	def branchName = "";
+	new ByteArrayOutputStream().withStream { os ->
+		def result = exec {
+			executable = 'git'
+			args = ['rev-parse', '--abbrev-ref', 'HEAD']
+			standardOutput = os
+		}
+		branchName = os.toString()
+	}
+
     compileSdkVersion 26
     defaultConfig {
         applicationId "com.ledgerleopard.sorvin"
-        minSdkVersion 15
+        minSdkVersion 24
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+	    setProperty("archivesBaseName",  applicationId +"-" + branchName.trim() + "-" + commitCount.trim() + "-" + "(" + versionName + ")")
     }
     buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
+	    release {
+		    versionNameSuffix "-release"
+		    minifyEnabled false
+		    proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+	    }
+
+	    debug {
+		    versionNameSuffix "-debug"
+	    }
     }
+
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_1_8
+		targetCompatibility JavaVersion.VERSION_1_8
+	}
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:26.1.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+	implementation project(':jna')
+	implementation fileTree(include: ['*.jar'], dir: 'libs')
+	implementation 'com.android.support:appcompat-v7:26.1.0'
+	implementation 'com.android.support.constraint:constraint-layout:1.1.0'
+	testImplementation 'junit:junit:4.12'
+	androidTestImplementation 'com.android.support.test:runner:1.0.2'
+	androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+	implementation project(':jna')
 }
