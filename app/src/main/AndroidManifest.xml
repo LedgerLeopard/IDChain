@@ -22,6 +22,10 @@
 		<activity android:name=".functionality.login.LoginViewImpl"
 					android:screenOrientation="portrait"
 				/>
-	</application>
+	    <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="7f74ef579a3810b1a79c75373f70319ac87e3569" />
+    </application>
 
+    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
