@@ -1,7 +1,7 @@
 <resources>
 
 	<!-- Base application theme. -->
-	<style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+	<style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
 		<!-- Customize your theme here. -->
 		<item name="android:windowBackground">@android:color/white</item>
 		<item name="colorPrimary">@color/colorPrimary</item>
@@ -11,6 +11,36 @@
 
 	<style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
 		<item name="android:windowBackground">@drawable/splash_layer</item>
+	</style>
+
+	<!--*****************************************************************-->
+	<style name="Toolbar" parent="ThemeOverlay.AppCompat.ActionBar">
+		<item name="android:textColorPrimary">@android:color/white</item>
+		<item name="colorControlNormal">@android:color/white</item>
+		<item name="colorControlActivated">@color/colorPrimaryDark</item>
+		<item name="colorControlHighlight">@color/colorPrimaryDark</item>
+		<item name="selectableItemBackground">?android:selectableItemBackground</item>
+		<item name="selectableItemBackgroundBorderless">?android:selectableItemBackground</item>
+	</style>
+
+	<!--*****************************************************************-->
+	<!--Buttons style -->
+	<style name="PrimaryButton">
+		<item name="android:layout_width">match_parent</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:background">@drawable/selector_button_primary</item>
+		<item name="android:textColor">@android:color/white</item>
+	</style>
+
+	<style name="AccentButton">
+		<item name="android:layout_width">match_parent</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:background">@drawable/selector_button_accent</item>
+		<item name="android:textColor">@android:color/white</item>
+	</style>
+
+	<style name="MyDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+		<item name="android:background">@color/colorAccent</item>
 	</style>
 
 </resources>

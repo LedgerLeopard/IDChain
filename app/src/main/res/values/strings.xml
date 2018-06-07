@@ -1,3 +1,14 @@
 <resources>
-	<string name="app_name">Sorvin</string>
+	<string name="app_name">IDChain</string>
+
+	<string name="commons_loading">Loading</string>
+	<string name="commons_ok">Ok</string>
+	<string name="commons_cancel">Cancel</string>
+	<string name="commons_apply">Apply</string>
+	<string name="commons_confirmation">Confirmation</string>
+	<string name="commons_warning">Warning</string>
+	<string name="commons_reset">Reset</string>
+	<string name="commons_error">Error</string>
+	<string name="commons_unknown">Unknown</string>
+	<string name="commons_authentification">Authentification</string>
 </resources>
