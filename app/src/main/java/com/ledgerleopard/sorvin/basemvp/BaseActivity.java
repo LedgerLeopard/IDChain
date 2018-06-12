@@ -3,9 +3,15 @@ package com.ledgerleopard.sorvin.basemvp;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.LayoutRes;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -21,7 +27,14 @@ import com.ledgerleopard.sorvin.R;
 
 public abstract class BaseActivity<PRESENTER extends BaseContract.IBasePresenter> extends AppCompatActivity implements BaseContract.IBaseView{
 
-    private ProgressDialog pd;
+	private final int REQUEST_PERMISSION_FIRST = 101;
+	private final int REQUEST_PERMISSION_SECOND = 102;
+	private final int REQUEST_PERMISSION_SETTING = 103;
+	protected final int DENY_PERMISSION = 1;
+	protected final int DENY_PERMISSION_NO_ASK = 2;
+	private PermissionCallback callback;
+
+	private ProgressDialog pd;
     private AlertDialog dialog;
     private InputMethodManager imm;
     protected PRESENTER presenter;
@@ -146,4 +159,77 @@ public abstract class BaseActivity<PRESENTER extends BaseContract.IBasePresenter
     public void logout() {
         //todo implement me
     }
+
+
+	// *********************************************************************************************
+	// permissons
+	protected void checkPermission(String permission, PermissionCallback callback) {
+		this.callback = callback;
+		if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+			requestPermission(permission);
+		} else {
+			this.callback.onSuccess();
+		}
+	}
+
+	protected void requestPermission(String permission) {
+		if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+			ActivityCompat.requestPermissions(this, new String[]{permission}, REQUEST_PERMISSION_SECOND);
+		} else {
+			ActivityCompat.requestPermissions(this, new String[]{permission}, REQUEST_PERMISSION_FIRST);
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+		switch (requestCode) {
+			case REQUEST_PERMISSION_FIRST:
+				if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					callback.onSuccess();
+				} else {
+					if (!ActivityCompat.shouldShowRequestPermissionRationale(this, permissions[0])) {
+						callback.onFailure(DENY_PERMISSION_NO_ASK);
+					} else {
+						callback.onFailure(DENY_PERMISSION);
+					}
+				}
+				break;
+			case REQUEST_PERMISSION_SECOND:
+				if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					callback.onSuccess();
+				} else {
+					callback.onFailure(DENY_PERMISSION);
+				}
+				break;
+		}
+	}
+
+	protected boolean isPermission(String permission) {
+		return ActivityCompat.checkSelfPermission(this, permission)
+			== PackageManager.PERMISSION_GRANTED;
+	}
+
+	protected void showPermissionSettingDialog(String message) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("No permission provided")
+			.setMessage("Please go user settings and provide permission!")
+			.setCancelable(false)
+			.setPositiveButton("Ok", (dialog, which) -> openPermissionSettings());
+		AlertDialog alert = builder.create();
+		alert.show();
+	}
+
+	private void openPermissionSettings() {
+		Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+		Uri uri = Uri.fromParts("package", getPackageName(), null);
+		intent.setData(uri);
+		startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+	}
+
+	public interface PermissionCallback {
+		void onSuccess();
+		void onFailure(int attemptCount);
+	}
 }

@@ -3,10 +3,10 @@ package com.ledgerleopard.sorvin.functionality.login;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AlertDialog;
-import android.widget.Toast;
 import com.ledgerleopard.sorvin.R;
 import com.ledgerleopard.sorvin.basemvp.BaseActivity;
 import com.ledgerleopard.sorvin.databinding.ActivityLoginBinding;
+import com.ledgerleopard.sorvin.functionality.connections.ConnectionsViewImpl;
 import com.ledgerleopard.sorvin.utils.SharedPreferenceStorage;
 
 public class LoginViewImpl extends BaseActivity<LoginContract.ILoginPresenter>
@@ -51,6 +51,6 @@ public class LoginViewImpl extends BaseActivity<LoginContract.ILoginPresenter>
 
 	@Override
 	public void gotoMain() {
-		Toast.makeText(this, "GO TO MAIN", Toast.LENGTH_LONG).show();
+		ConnectionsViewImpl.start(this);
 	}
 }

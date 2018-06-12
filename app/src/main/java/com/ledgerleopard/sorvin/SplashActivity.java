@@ -19,4 +19,10 @@ public class SplashActivity extends AppCompatActivity {
 			LoginViewImpl.start(this);
 		}, 1000);
 	}
+
+	@Override
+	protected void onRestart() {
+		super.onRestart();
+		finish();
+	}
 }
