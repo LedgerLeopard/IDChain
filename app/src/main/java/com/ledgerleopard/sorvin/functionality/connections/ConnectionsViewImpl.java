@@ -9,7 +9,9 @@ import android.widget.TextView;
 import com.ledgerleopard.sorvin.R;
 import com.ledgerleopard.sorvin.basemvp.BaseActivity;
 import com.ledgerleopard.sorvin.functionality.addconnection.QRScanningActivity;
+import com.ledgerleopard.sorvin.model.ConnectionItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ConnectionsViewImpl
@@ -17,6 +19,8 @@ public class ConnectionsViewImpl
 	implements ConnectionsContract.View {
 
 	public final int QR_SCAN_REQUEST_CODE = 1;
+	private ConnectionsAdapter connectionsAdapter;
+	private List<ConnectionItem> content = new ArrayList<>();
 
 	public static void start( Context context){
 		context.startActivity( new Intent(context, ConnectionsViewImpl.class) );
@@ -29,6 +33,7 @@ public class ConnectionsViewImpl
 
 	@Override
 	protected void initUI() {
+		setToolbarTitle("Connections");
 		setContentView(R.layout.activity_connections);
 		findViewById(R.id.fab).setOnClickListener(v -> {
 			checkPermission(Manifest.permission.CAMERA, new PermissionCallback() {
@@ -43,6 +48,9 @@ public class ConnectionsViewImpl
 		});
 
 		lvConnections = findViewById(R.id.lvConnections);
+		connectionsAdapter = new ConnectionsAdapter(this, -1, content);
+		lvConnections.setAdapter(connectionsAdapter);
+
 		tvNoItems = findViewById(R.id.tvNoItems);
 	}
 
@@ -51,15 +59,22 @@ public class ConnectionsViewImpl
 		presenter = new ConnectionsListPresenter(this, new ConnectionsModelImpl(this));
 	}
 
-	@Override
-	public void showConnectionsList(List<Object> content) {
 
+	@Override
+	public void showConnectionsList(List<ConnectionItem> update) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				content.clear();
+				content.addAll(update);
+				connectionsAdapter.notifyDataSetChanged();
+			}
+		});
 	}
 
 	@Override
 	public void showHideNoConnectionsError( boolean visible ) {
 		tvNoItems.setVisibility( visible ? View.VISIBLE : View.GONE);
-		lvConnections.setVisibility( !visible ? View.VISIBLE : View.GONE);
 	}
 
 	@Override

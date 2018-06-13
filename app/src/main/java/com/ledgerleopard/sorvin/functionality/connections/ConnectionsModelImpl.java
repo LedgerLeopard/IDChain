@@ -5,7 +5,11 @@ import com.google.gson.Gson;
 import com.ledgerleopard.sorvin.IndySDK;
 import com.ledgerleopard.sorvin.api.request.OnboadringRequest;
 import com.ledgerleopard.sorvin.basemvp.BaseModel;
+import com.ledgerleopard.sorvin.model.ConnectionItem;
 import okhttp3.*;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class ConnectionsModelImpl extends BaseModel implements ConnectionsContract.Model {
 
@@ -19,10 +23,13 @@ public class ConnectionsModelImpl extends BaseModel implements ConnectionsContra
 	}
 
 	@Override
-	public void createWallet() {
-		if ( !IndySDK.getInstance().isWalletExist() ){
-			IndySDK.getInstance().createAndOpenWallet();
-		}
+	public CompletableFuture<Void> initializeWallet() {
+		return CompletableFuture.runAsync(() -> {
+			if ( !IndySDK.getInstance().isWalletExist() ){
+				IndySDK.getInstance().createAndOpenWallet();
+			}
+
+		});
 	}
 
 	@Override
@@ -39,5 +46,10 @@ public class ConnectionsModelImpl extends BaseModel implements ConnectionsContra
 			.build();
 
 		httpClient.newCall(request).enqueue(callback);
+	}
+
+	@Override
+	public void getConnectionsList( IndySDK.IndyCallback<List<ConnectionItem>> callback ) {
+		IndySDK.getInstance().getConnectionsList(callback);
 	}
 }

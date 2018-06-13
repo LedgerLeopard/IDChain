@@ -2,6 +2,7 @@ package com.ledgerleopard.sorvin;
 
 import android.text.TextUtils;
 import com.google.gson.Gson;
+import com.ledgerleopard.sorvin.model.ConnectionItem;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.hyperledger.indy.sdk.IndyException;
@@ -11,6 +12,8 @@ import org.hyperledger.indy.sdk.did.DidResults;
 import org.hyperledger.indy.sdk.pairwise.Pairwise;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class IndySDK implements Library {
@@ -187,6 +190,30 @@ public class IndySDK implements Library {
 		}
 
 		return false;
+	}
+
+	public void getConnectionsList( IndyCallback<List<ConnectionItem>> callback  ){
+		if ( callback == null ) {
+			throw new IllegalArgumentException("IndyCallback should be not null");
+		}
+
+		try {
+			String resString = Pairwise.listPairwise(wallet).get();
+			resString = resString.replace("\\", "");
+			StringBuilder sb = new StringBuilder(resString);
+			sb.deleteCharAt(sb.indexOf("\""));
+			sb.deleteCharAt(sb.lastIndexOf("\""));
+
+
+			ConnectionItem[] connectionItemsAr = gson.fromJson(sb.toString(), ConnectionItem[].class);
+			callback.onDone(Arrays.asList(connectionItemsAr), null);
+		} catch (IndyException e) {
+			callback.onDone(null,e.getMessage());
+		} catch (InterruptedException e) {
+			callback.onDone(null,e.getMessage());
+		} catch (ExecutionException e) {
+			callback.onDone(null,e.getMessage());
+		}
 	}
 
 

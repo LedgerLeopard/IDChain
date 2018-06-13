@@ -1,5 +1,6 @@
 package com.ledgerleopard.sorvin.functionality.connections;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.text.TextUtils;
 import com.google.gson.Gson;
@@ -74,7 +75,12 @@ public class ConnectionsListPresenter
 					@Override
 					public void onResponse(Call call, Response response) throws IOException {
 						view.hideProgress();
-						view.createDialog("Success", "Connection have been created successfully", null);
+						view.createDialog("Success", "Connection have been created successfully", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								updateConnections();
+							}
+						});
 					}
 				});
 			} else {
@@ -86,10 +92,27 @@ public class ConnectionsListPresenter
 
 	@Override
 	public void onStart() {
-		model.createWallet();
+		view.showProgress(false, null);
+		model.initializeWallet().thenAccept(aVoid -> {
+			updateConnections();
+		});
 
-		// todo get list of connections
+	}
 
-		view.showHideNoConnectionsError(true);
+	private void updateConnections(){
+		view.showProgress(false, null);
+		model.getConnectionsList((result, errorMessage) -> {
+			view.hideProgress();
+
+			if (!TextUtils.isEmpty(errorMessage) ){
+				view.showError(errorMessage, null);
+			} else {
+				if ( result.size() == 0 ) {
+					view.showHideNoConnectionsError(true);
+				} else {
+					view.showConnectionsList(result);
+				}
+			}
+		});
 	}
 }
