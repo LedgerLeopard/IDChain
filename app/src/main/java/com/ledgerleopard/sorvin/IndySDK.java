@@ -12,6 +12,7 @@ import org.hyperledger.indy.sdk.did.DidResults;
 import org.hyperledger.indy.sdk.pairwise.Pairwise;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -199,14 +200,19 @@ public class IndySDK implements Library {
 
 		try {
 			String resString = Pairwise.listPairwise(wallet).get();
-			resString = resString.replace("\\", "");
-			StringBuilder sb = new StringBuilder(resString);
-			sb.deleteCharAt(sb.indexOf("\""));
-			sb.deleteCharAt(sb.lastIndexOf("\""));
+			if (resString.compareToIgnoreCase("[]") != 0){
+				resString = resString.replace("\\", "");
+				StringBuilder sb = new StringBuilder(resString);
+				sb.deleteCharAt(sb.indexOf("\""));
+				sb.deleteCharAt(sb.lastIndexOf("\""));
 
 
-			ConnectionItem[] connectionItemsAr = gson.fromJson(sb.toString(), ConnectionItem[].class);
-			callback.onDone(Arrays.asList(connectionItemsAr), null);
+				ConnectionItem[] connectionItemsAr = gson.fromJson(sb.toString(), ConnectionItem[].class);
+				callback.onDone(Arrays.asList(connectionItemsAr), null);
+			} else {
+				callback.onDone( new ArrayList<>(), null);
+			}
+
 		} catch (IndyException e) {
 			callback.onDone(null,e.getMessage());
 		} catch (InterruptedException e) {

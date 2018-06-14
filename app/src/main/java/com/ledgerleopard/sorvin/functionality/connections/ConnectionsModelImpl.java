@@ -41,6 +41,7 @@ public class ConnectionsModelImpl extends BaseModel implements ConnectionsContra
 	public void sendDIDback(String url, OnboadringRequest requestBody, Callback callback) {
 		RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), gson.toJson(requestBody));
 		Request request = new Request.Builder()
+			.addHeader("Authorization", "") // todo add
 			.url(url)
 			.put(body)
 			.build();
