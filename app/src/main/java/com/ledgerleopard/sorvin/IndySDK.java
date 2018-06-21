@@ -1,18 +1,23 @@
 package com.ledgerleopard.sorvin;
 
 import android.text.TextUtils;
+
 import com.google.gson.Gson;
 import com.ledgerleopard.sorvin.model.ConnectionItem;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.LibIndy;
 import org.hyperledger.indy.sdk.crypto.Crypto;
 import org.hyperledger.indy.sdk.did.Did;
 import org.hyperledger.indy.sdk.did.DidResults;
 import org.hyperledger.indy.sdk.pairwise.Pairwise;
+import org.hyperledger.indy.sdk.pool.Pool;
+import org.hyperledger.indy.sdk.pool.PoolJSONParameters;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -261,5 +266,48 @@ public class IndySDK implements Library {
 
 	public interface IndyCallback<T> {
 		void onDone( T result, String errorMessage );
+	}
+
+	// *********************************************************************************************
+	// POOOOOOOL
+	public CompletableFuture<Void> createAndOpenPoolFromConfigFile(File configFile){
+		return CompletableFuture.supplyAsync(() -> {
+            try {
+                String fileName = configFile.getName();
+                PoolJSONParameters.CreatePoolLedgerConfigJSONParameter createPoolLedgerConfigJSONParameter
+                        = new PoolJSONParameters.CreatePoolLedgerConfigJSONParameter(configFile.getAbsolutePath());
+                Pool.createPoolLedgerConfig(fileName, createPoolLedgerConfigJSONParameter.toJson()).get();
+                Pool.openPoolLedger(fileName, null).get();
+            }  catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (IndyException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            }
+            return null;
+        });
+	}
+
+	public CompletableFuture<Void> deletePoolConfig(String fileName){
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				Pool.deletePoolLedgerConfig(fileName).get();
+
+			}  catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+			return null;
+		});
 	}
 }

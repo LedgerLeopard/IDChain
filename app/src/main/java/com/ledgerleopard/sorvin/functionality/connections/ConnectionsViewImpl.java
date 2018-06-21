@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import com.ledgerleopard.sorvin.R;
 import com.ledgerleopard.sorvin.basemvp.BaseActivity;
 import com.ledgerleopard.sorvin.functionality.addconnection.QRScanningActivity;
@@ -21,15 +22,12 @@ public class ConnectionsViewImpl
 	public final int QR_SCAN_REQUEST_CODE = 1;
 	private ConnectionsAdapter connectionsAdapter;
 	private List<ConnectionItem> content = new ArrayList<>();
+	private ListView lvConnections;
+	private TextView tvNoItems;
 
 	public static void start( Context context){
 		context.startActivity( new Intent(context, ConnectionsViewImpl.class) );
 	}
-
-
-	private ListView lvConnections;
-	private TextView tvNoItems;
-
 
 	@Override
 	protected void initUI() {

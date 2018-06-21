@@ -6,6 +6,7 @@ import android.support.v7.app.AlertDialog;
 import com.ledgerleopard.sorvin.R;
 import com.ledgerleopard.sorvin.basemvp.BaseActivity;
 import com.ledgerleopard.sorvin.databinding.ActivityLoginBinding;
+import com.ledgerleopard.sorvin.functionality.actions.ActionsActivity;
 import com.ledgerleopard.sorvin.functionality.connections.ConnectionsViewImpl;
 import com.ledgerleopard.sorvin.utils.SharedPreferenceStorage;
 
@@ -51,6 +52,6 @@ public class LoginViewImpl extends BaseActivity<LoginContract.ILoginPresenter>
 
 	@Override
 	public void gotoMain() {
-		ConnectionsViewImpl.start(this);
+		ActionsActivity.start(this);
 	}
 }

@@ -94,3 +94,32 @@ dependencies {
 	// qr
 	implementation 'com.dlazaro66.qrcodereaderview:qrcodereaderview:2.0.2'
 }
+
+class RunApk extends DefaultTask {
+	def adbExec;
+
+	@TaskAction
+	def runApp() {
+		println "running path on device or emulator"
+		println "adb:" + adbExec
+		def cmd = adbExec + " shell am start -a android.intent.action.MAIN -n com.ledgerleopard.sorvin/com.ledgerleopard.sorvin.SplashActivity"
+		println cmd
+		def proc = cmd.execute()
+		proc.in.eachLine { line -> println line }
+		proc.err.eachLine { line -> println 'ERROR: ' + line }
+		proc.waitFor()
+	}
+}
+
+Properties properties = new Properties()
+File localPropFile = new File(rootDir.absolutePath + "/local.properties")
+if (!localPropFile.exists())
+	return;
+
+properties.load(new File(rootDir.absolutePath + "/local.properties").newDataInputStream())
+println properties["sdk.dir"]
+def adb = properties['sdk.dir'] + "/platform-tools/adb"
+
+tasks.create(name: "runApk", type: RunApk, dependsOn: 'installDebug') {
+	adbExec = adb
+}
