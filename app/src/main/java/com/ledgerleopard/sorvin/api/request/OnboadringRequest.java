@@ -7,14 +7,17 @@ public class OnboadringRequest {
 	class OnboadringPayload {
 		public String did;
 		public String verkey;
+		public String encryptedNonce;
 
-		public OnboadringPayload(String did, String verkey) {
+
+		public OnboadringPayload(String did, String verkey, String encryptedNonce) {
 			this.did = did;
 			this.verkey = verkey;
+			this.encryptedNonce = encryptedNonce;
 		}
 	}
 
-	public OnboadringRequest(String did, String verkey) {
-		this.responsePayload = new OnboadringPayload(did, verkey);
+	public OnboadringRequest(String did, String verkey, String encryptedNonce) {
+		this.responsePayload = new OnboadringPayload(did, verkey, encryptedNonce);
 	}
 }

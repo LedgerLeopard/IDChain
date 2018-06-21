@@ -65,23 +65,32 @@ public class ConnectionsListPresenter
 		model.createAndStoreDidAndConnectWithForeignDid(qrPayload.did, (IndySDK.IndyCallback<DidResults.CreateAndStoreMyDidResult>) (result, errorMessage) -> {
 			if ( result != null ){
 				// Send result to server back
-				model.sendDIDback(qrPayload.sendBackUrl, new OnboadringRequest(result.getDid(), result.getVerkey()), new Callback() {
-					@Override
-					public void onFailure(Call call, IOException e) {
-						view.hideProgress();
-						view.showError(e.getMessage(), null);
-					}
 
-					@Override
-					public void onResponse(Call call, Response response) throws IOException {
-						view.hideProgress();
-						view.createDialog("Success", "Connection have been created successfully", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								updateConnections();
-							}
-						});
-					}
+				model.encryptAnon( qrPayload.did, qrPayload.nonce ).thenAccept(bytes -> {
+					OnboadringRequest request = new OnboadringRequest(result.getDid(), result.getVerkey(), new String(bytes));
+					model.sendDIDback(qrPayload.sendBackUrl, request, new Callback() {
+						@Override
+						public void onFailure(Call call, IOException e) {
+							view.hideProgress();
+							view.showError(e.getMessage(), null);
+						}
+
+						@Override
+						public void onResponse(Call call, Response response) throws IOException {
+							view.hideProgress();
+							view.createDialog("Success", "Connection have been created successfully", new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									updateConnections();
+								}
+							});
+						}
+					});
+
+				}).exceptionally(throwable -> {
+					view.hideProgress();
+					view.showError(errorMessage, null);
+					return null;
 				});
 			} else {
 				view.hideProgress();
@@ -96,7 +105,6 @@ public class ConnectionsListPresenter
 		model.initializeWallet().thenAccept(aVoid -> {
 			updateConnections();
 		});
-
 	}
 
 	private void updateConnections(){

@@ -1,6 +1,7 @@
 package com.ledgerleopard.sorvin.basemvp;
 
 import android.content.Context;
+
 import java.lang.ref.WeakReference;
 
 
@@ -25,4 +26,7 @@ public class BaseModel implements BaseContract.IBaseModel {
 	public String getString(int id, Object... objects) {
 		return context.get().getString(id, objects);
 	}
+
+
+
 }

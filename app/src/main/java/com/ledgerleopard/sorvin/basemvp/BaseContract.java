@@ -6,8 +6,8 @@ import android.content.DialogInterface;
  * Created by sergeybrazhnik on 04.09.17.
  */
 
-public class BaseContract {
-    public interface IBaseView {
+public interface BaseContract {
+    interface IBaseView {
         void showProgress(final boolean cancelable,
                           final DialogInterface.OnCancelListener cancelListener);
 	    void showProgress(final String loadingMeessage,
@@ -33,11 +33,11 @@ public class BaseContract {
         void logout();
     }
 
-    public interface IBasePresenter<VIEW_MODEL extends BaseViewModel>{
+    interface IBasePresenter<VIEW_MODEL extends BaseViewModel>{
 	    void onStart();
     }
 
-    public interface IBaseModel{
+    interface IBaseModel {
         String getString(int id);
 	    String getString(int id, Object... objects);
     }

@@ -7,6 +7,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.LibIndy;
+import org.hyperledger.indy.sdk.crypto.Crypto;
 import org.hyperledger.indy.sdk.did.Did;
 import org.hyperledger.indy.sdk.did.DidResults;
 import org.hyperledger.indy.sdk.pairwise.Pairwise;
@@ -15,6 +16,7 @@ import org.hyperledger.indy.sdk.wallet.Wallet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class IndySDK implements Library {
@@ -220,6 +222,40 @@ public class IndySDK implements Library {
 		} catch (ExecutionException e) {
 			callback.onDone(null,e.getMessage());
 		}
+	}
+
+	public CompletableFuture<byte[]> encrypt( String verKey, String message ) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				return Crypto.anonCrypt(verKey, message.getBytes()).get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+		});
+	}
+
+	public CompletableFuture<byte[]> sign( String verKey, String message ) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				return Crypto.cryptoSign(wallet, verKey, message.getBytes() ).get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+		});
 	}
 
 

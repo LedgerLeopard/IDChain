@@ -4,14 +4,10 @@ import android.content.Context;
 import com.google.gson.Gson;
 import com.ledgerleopard.sorvin.IndySDK;
 import com.ledgerleopard.sorvin.api.request.OnboadringRequest;
-import com.ledgerleopard.sorvin.basemvp.BaseModel;
-import com.ledgerleopard.sorvin.model.ConnectionItem;
+import com.ledgerleopard.sorvin.basemvp.IndyBaseModel;
 import okhttp3.*;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-public class ConnectionsModelImpl extends BaseModel implements ConnectionsContract.Model {
+public class ConnectionsModelImpl extends IndyBaseModel implements ConnectionsContract.Model {
 
 	private final Gson gson;
 	private final OkHttpClient httpClient;
@@ -23,22 +19,14 @@ public class ConnectionsModelImpl extends BaseModel implements ConnectionsContra
 	}
 
 	@Override
-	public CompletableFuture<Void> initializeWallet() {
-		return CompletableFuture.runAsync(() -> {
-			if ( !IndySDK.getInstance().isWalletExist() ){
-				IndySDK.getInstance().createAndOpenWallet();
-			}
-
-		});
-	}
-
-	@Override
 	public void createAndStoreDidAndConnectWithForeignDid( String foreignDid, IndySDK.IndyCallback callback ) {
 		IndySDK.getInstance().createStoreMyDidAndConnectWithForeignDid(foreignDid, callback);
 	}
 
 	@Override
 	public void sendDIDback(String url, OnboadringRequest requestBody, Callback callback) {
+		// todo
+
 		RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), gson.toJson(requestBody));
 		Request request = new Request.Builder()
 			.addHeader("Authorization", "") // todo add
@@ -47,10 +35,5 @@ public class ConnectionsModelImpl extends BaseModel implements ConnectionsContra
 			.build();
 
 		httpClient.newCall(request).enqueue(callback);
-	}
-
-	@Override
-	public void getConnectionsList( IndySDK.IndyCallback<List<ConnectionItem>> callback ) {
-		IndySDK.getInstance().getConnectionsList(callback);
 	}
 }
