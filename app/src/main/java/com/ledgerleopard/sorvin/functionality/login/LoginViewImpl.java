@@ -5,16 +5,13 @@ import android.content.Intent;
 import android.support.v7.app.AlertDialog;
 import com.ledgerleopard.sorvin.R;
 import com.ledgerleopard.sorvin.basemvp.BaseActivity;
-import com.ledgerleopard.sorvin.databinding.ActivityLoginBinding;
 import com.ledgerleopard.sorvin.functionality.actions.ActionsActivity;
-import com.ledgerleopard.sorvin.functionality.connections.ConnectionsViewImpl;
 import com.ledgerleopard.sorvin.utils.SharedPreferenceStorage;
 
 public class LoginViewImpl extends BaseActivity<LoginContract.ILoginPresenter>
 	implements LoginContract.ILoginView {
 
 	private AlertDialog touchIdDialog;
-	private ActivityLoginBinding binding;
 
 	public static void start(Context context ) {
 		context.startActivity(new Intent(context, LoginViewImpl.class));

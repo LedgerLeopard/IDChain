@@ -11,13 +11,11 @@ import com.ledgerleopard.sorvin.IndySDK;
 import com.ledgerleopard.sorvin.api.request.OnboadringRequest;
 import com.ledgerleopard.sorvin.basemvp.BasePresenter;
 import com.ledgerleopard.sorvin.functionality.addconnection.QRScanningActivity;
-import com.ledgerleopard.sorvin.model.ConnectionItem;
 import com.ledgerleopard.sorvin.model.QRPayload;
 
 import org.hyperledger.indy.sdk.did.DidResults;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.function.Consumer;
 
 import okhttp3.Call;
@@ -125,22 +123,21 @@ public class ConnectionsListPresenter
 
 	@Override
 	public void onStart() {
-		view.showProgress(false, null);
 		updateConnections();
 	}
 
 	private void updateConnections(){
 		view.showProgress(false, null);
-		model.getConnectionsList().thenAccept(new Consumer<List<ConnectionItem>>() {
-			@Override
-			public void accept(List<ConnectionItem> connectionItems) {
-				if ( connectionItems.size() == 0 ) {
-					view.showHideNoConnectionsError(true);
-				} else {
-					view.showConnectionsList(connectionItems);
-				}
-			}
-		}).exceptionally(throwable -> {
+		model.getConnectionsList().thenAccept(connectionItems -> {
+            view.hideProgress();
+            if ( connectionItems.size() == 0 ) {
+                view.showHideNoConnectionsError(true);
+            } else {
+                view.showConnectionsList(connectionItems);
+                view.showHideNoConnectionsError(false);
+            }
+        }).exceptionally(throwable -> {
+			view.hideProgress();
             view.showError(throwable.getMessage(), null);
             return null;
         });
