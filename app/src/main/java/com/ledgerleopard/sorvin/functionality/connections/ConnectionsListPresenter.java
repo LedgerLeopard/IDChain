@@ -1,21 +1,28 @@
 package com.ledgerleopard.sorvin.functionality.connections;
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.text.TextUtils;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.ledgerleopard.sorvin.IndySDK;
 import com.ledgerleopard.sorvin.api.request.OnboadringRequest;
 import com.ledgerleopard.sorvin.basemvp.BasePresenter;
 import com.ledgerleopard.sorvin.functionality.addconnection.QRScanningActivity;
+import com.ledgerleopard.sorvin.model.ConnectionItem;
 import com.ledgerleopard.sorvin.model.QRPayload;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Response;
+
 import org.hyperledger.indy.sdk.did.DidResults;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.function.Consumer;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 public class ConnectionsListPresenter
 	extends BasePresenter<ConnectionsContract.View, ConnectionsContract.Model, ConnectionsViewModel>
@@ -46,7 +53,9 @@ public class ConnectionsListPresenter
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// todo 1. Parse string to Object
+		if ( resultCode != Activity.RESULT_OK )
+			return;
+
 		String qrContent = data.getStringExtra(QRScanningActivity.RESULT_QR_STRING);
 		if (TextUtils.isEmpty(qrContent)) {
 			view.showError("No payload in QR", null);
@@ -60,67 +69,80 @@ public class ConnectionsListPresenter
 			return;
 		}
 
+
+
+
 		// Generate DID
 		view.showProgress("Creating connection", false, null);
-		model.createAndStoreDidAndConnectWithForeignDid(qrPayload.did, (IndySDK.IndyCallback<DidResults.CreateAndStoreMyDidResult>) (result, errorMessage) -> {
-			if ( result != null ){
-				// Send result to server back
+		IndySDK.getInstance().createAndStoreMyDid().thenAccept(new Consumer<DidResults.CreateAndStoreMyDidResult>() {
+            @Override
+            public void accept(DidResults.CreateAndStoreMyDidResult didResult) {
+                OnboadringRequest request = new OnboadringRequest(didResult.getDid(), didResult.getVerkey());
 
-				model.encryptAnon( qrPayload.did, qrPayload.nonce ).thenAccept(bytes -> {
-					OnboadringRequest request = new OnboadringRequest(result.getDid(), result.getVerkey(), new String(bytes));
-					model.sendDIDback(qrPayload.sendBackUrl, request, new Callback() {
-						@Override
-						public void onFailure(Call call, IOException e) {
-							view.hideProgress();
-							view.showError(e.getMessage(), null);
-						}
 
-						@Override
-						public void onResponse(Call call, Response response) throws IOException {
-							view.hideProgress();
-							view.createDialog("Success", "Connection have been created successfully", new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									updateConnections();
-								}
-							});
-						}
-					});
 
-				}).exceptionally(throwable -> {
-					view.hideProgress();
-					view.showError(errorMessage, null);
-					return null;
-				});
-			} else {
-				view.hideProgress();
-				view.showError(errorMessage, null);
-			}
-		});
+
+                // todo add encryption then it will be done on server
+//                String requestString = gson.toJson(request);
+//                model.encryptAnon( qrPayload.verkey, requestString).thenAccept(bytes -> {
+//
+//                }).exceptionally(throwable -> {
+//                    view.hideProgress();
+//                    view.showError(throwable.getMessage(), null);
+//                    return null;
+//                });
+
+
+
+                model.sendDIDback(qrPayload.sendbackUrl(), qrPayload.token, request, new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        view.hideProgress();
+                        view.showError(e.getMessage(), null);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response)  {
+                        IndySDK.getInstance().connectMyDidWithForeignDid(didResult.getDid(), qrPayload.did);
+
+                    	view.hideProgress();
+                        view.createDialog("Success", "Connection have been created successfully", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                updateConnections();
+                            }
+                        });
+                    }
+                });
+
+            }
+        }).exceptionally(throwable -> {
+            view.hideProgress();
+            view.showError(throwable.getMessage(), null);
+            return null;
+        });
 	}
 
 	@Override
 	public void onStart() {
 		view.showProgress(false, null);
-		model.initializeWallet().thenAccept(aVoid -> {
-			updateConnections();
-		});
+		updateConnections();
 	}
 
 	private void updateConnections(){
 		view.showProgress(false, null);
-		model.getConnectionsList((result, errorMessage) -> {
-			view.hideProgress();
-
-			if (!TextUtils.isEmpty(errorMessage) ){
-				view.showError(errorMessage, null);
-			} else {
-				if ( result.size() == 0 ) {
+		model.getConnectionsList().thenAccept(new Consumer<List<ConnectionItem>>() {
+			@Override
+			public void accept(List<ConnectionItem> connectionItems) {
+				if ( connectionItems.size() == 0 ) {
 					view.showHideNoConnectionsError(true);
 				} else {
-					view.showConnectionsList(result);
+					view.showConnectionsList(connectionItems);
 				}
 			}
-		});
+		}).exceptionally(throwable -> {
+            view.showError(throwable.getMessage(), null);
+            return null;
+        });
 	}
 }

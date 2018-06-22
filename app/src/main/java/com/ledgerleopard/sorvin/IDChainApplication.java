@@ -10,6 +10,12 @@ public class IDChainApplication extends Application {
 	private static IDChainApplication appInstance;
 	private final String TAG = IDChainApplication.class.getCanonicalName();
 
+	public String attestationGetCredentialOffersUrl;
+
+	public static IDChainApplication getAppInstance(){
+		return appInstance;
+	}
+
 	@Override
 	public void onCreate() {
 		super.onCreate();

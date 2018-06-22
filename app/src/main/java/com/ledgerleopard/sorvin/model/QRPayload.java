@@ -1,12 +1,15 @@
 package com.ledgerleopard.sorvin.model;
 
-import com.google.gson.annotations.SerializedName;
-
 public class QRPayload {
 	public String did;
+	public String verkey;
 
-	public String nonce;
+	public String token;
 
-	@SerializedName("url")
-	public String sendBackUrl;
+	private String baseUrl;
+	private String path;
+
+	public String sendbackUrl(){
+		return baseUrl + path;
+	}
 }

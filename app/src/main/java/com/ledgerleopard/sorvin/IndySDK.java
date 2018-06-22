@@ -23,15 +23,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 public class IndySDK implements Library {
 
 	protected static final String POOL = "docker-pool";
 	protected static final String WALLET = "Wallet5";
 	protected static final String TYPE = "default";
-	protected static final String CONNECTION_NAME = "Onboarding connection";
+	protected static final String GOVERNMENT_CONNECTION_NAME = "Government connection";
 	protected static final String credentials = "{\"key\": \"\"}";
-	protected static final String PAIRWISE_NAME = "pairwise_name";
 
 
 	private static IndySDK instance;
@@ -131,34 +131,65 @@ public class IndySDK implements Library {
 	}
 
 
-	public void createStoreMyDidAndConnectWithForeignDid( String foreignDid, IndyCallback<DidResults.CreateAndStoreMyDidResult> callback ) {
-		if ( callback == null ) {
-			throw new IllegalArgumentException("IndyCallback should be not null");
-		}
+	// *********************************************************************************************
+	// DID
+	public void getGovernmentMyDid( IndyCallback<ConnectionItem> callback ) {
+		IndySDK.getInstance().getConnectionsList().thenAccept(connectionItems -> {
+            for (ConnectionItem connectionItem : connectionItems) {
+                if ( connectionItem.connectionName.compareToIgnoreCase(GOVERNMENT_CONNECTION_NAME) == 0){
+                    callback.onDone(connectionItem, null);
+                }
+            }
+        });
+	}
 
-		new Thread(() -> {
-			try {
-				// create my did
-				DidResults.CreateAndStoreMyDidResult result = Did.createAndStoreMyDid(wallet, "{}").get();
+	public CompletableFuture<DidResults.CreateAndStoreMyDidResult> createAndStoreMyDid( ) {
+		return CompletableFuture.supplyAsync(() -> {
+            try {
+                // create my did
+                return Did.createAndStoreMyDid(wallet, "{}").get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (IndyException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            }
+        });
+	}
 
-				// check if foreign key already stored in wallet
-				if ( !checkIfTheirDidAlreadyStored(foreignDid) ){
-					Did.storeTheirDid(wallet, String.format("{\"did\":\"%s\"}", foreignDid)).get();
+	public CompletableFuture<Void> connectMyDidWithForeignDid(String myDid, String foreignDid ){
+		return CompletableFuture.supplyAsync(new Supplier<Void>() {
+			@Override
+			public Void get() {
+				try {
+					// check if foreign key already stored in wallet
+					if ( !checkIfTheirDidAlreadyStored(foreignDid) ){
+						Did.storeTheirDid(wallet, String.format("{\"did\":\"%s\"}", foreignDid)).get();
+					}
+
+					if ( !Pairwise.isPairwiseExists(wallet, foreignDid).get() ){
+						Pairwise.createPairwise(wallet, foreignDid, myDid, GOVERNMENT_CONNECTION_NAME).get();
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					throw new RuntimeException(e.getMessage());
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+					throw new RuntimeException(e.getMessage());
+				} catch (IndyException e) {
+					e.printStackTrace();
+					throw new RuntimeException(e.getMessage());
 				}
 
-				if ( !Pairwise.isPairwiseExists(wallet, foreignDid).get() ){
-					Pairwise.createPairwise(wallet, foreignDid, result.getDid(), CONNECTION_NAME).get();
-				}
-
-				callback.onDone(result,null);
-			} catch (IndyException e) {
-				callback.onDone(null,e.getMessage());
-			} catch (InterruptedException e) {
-				callback.onDone(null,e.getMessage());
-			} catch (ExecutionException e) {
-				callback.onDone(null,e.getMessage());
+				return null;
 			}
-		}).start();
+		});
+
+
 	}
 
 	/**
@@ -200,35 +231,39 @@ public class IndySDK implements Library {
 		return false;
 	}
 
-	public void getConnectionsList( IndyCallback<List<ConnectionItem>> callback  ){
-		if ( callback == null ) {
-			throw new IllegalArgumentException("IndyCallback should be not null");
-		}
-
-		try {
-			String resString = Pairwise.listPairwise(wallet).get();
-			if (resString.compareToIgnoreCase("[]") != 0){
-				resString = resString.replace("\\", "");
-				StringBuilder sb = new StringBuilder(resString);
-				sb.deleteCharAt(sb.indexOf("\""));
-				sb.deleteCharAt(sb.lastIndexOf("\""));
+	public CompletableFuture<List<ConnectionItem>> getConnectionsList( ){
+		return CompletableFuture.supplyAsync(() -> {
+            try {
+                String resString = Pairwise.listPairwise(wallet).get();
+                if (resString.compareToIgnoreCase("[]") != 0){
+                    resString = resString.replace("\\", "");
+                    StringBuilder sb = new StringBuilder(resString);
+                    sb.deleteCharAt(sb.indexOf("\""));
+                    sb.deleteCharAt(sb.lastIndexOf("\""));
 
 
-				ConnectionItem[] connectionItemsAr = gson.fromJson(sb.toString(), ConnectionItem[].class);
-				callback.onDone(Arrays.asList(connectionItemsAr), null);
-			} else {
-				callback.onDone( new ArrayList<>(), null);
-			}
-
-		} catch (IndyException e) {
-			callback.onDone(null,e.getMessage());
-		} catch (InterruptedException e) {
-			callback.onDone(null,e.getMessage());
-		} catch (ExecutionException e) {
-			callback.onDone(null,e.getMessage());
-		}
+                    ConnectionItem[] connectionItemsAr = gson.fromJson(sb.toString(), ConnectionItem[].class);
+                    return Arrays.asList(connectionItemsAr);
+                } else {
+                    return new ArrayList<>();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (IndyException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            }
+        });
 	}
 
+
+
+	// *********************************************************************************************
+	// ENCRYPTION
 	public CompletableFuture<byte[]> encrypt( String verKey, String message ) {
 		return CompletableFuture.supplyAsync(() -> {
 			try {

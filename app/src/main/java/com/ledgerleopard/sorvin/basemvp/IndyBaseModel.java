@@ -33,8 +33,8 @@ public class IndyBaseModel extends BaseModel implements IndyBaseModelInterface {
 	}
 
 	@Override
-	public void getConnectionsList( IndySDK.IndyCallback<List<ConnectionItem>> callback ) {
-		IndySDK.getInstance().getConnectionsList(callback);
+	public CompletableFuture<List<ConnectionItem>> getConnectionsList( ) {
+		return IndySDK.getInstance().getConnectionsList();
 	}
 
 }
