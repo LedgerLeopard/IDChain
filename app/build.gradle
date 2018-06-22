@@ -47,8 +47,8 @@ android {
         applicationId "com.ledgerleopard.sorvin"
         minSdkVersion 24
         targetSdkVersion 26
-        versionCode 1
-        versionName "1.0"
+		versionCode commitCount.toInteger()
+		versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 	    setProperty("archivesBaseName",  applicationId +"-" + branchName.trim() + "-" + commitCount.trim() + "-" + "(" + versionName + ")")
     }
