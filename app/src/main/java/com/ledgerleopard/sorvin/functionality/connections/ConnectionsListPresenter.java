@@ -7,6 +7,7 @@ import android.text.TextUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.ledgerleopard.sorvin.IDChainApplication;
 import com.ledgerleopard.sorvin.IndySDK;
 import com.ledgerleopard.sorvin.api.request.OnboadringRequest;
 import com.ledgerleopard.sorvin.basemvp.BasePresenter;
@@ -60,13 +61,14 @@ public class ConnectionsListPresenter
 			return;
 		}
 
+
 		try {
 			qrPayload = gson.fromJson(qrContent, QRPayload.class);
+			IDChainApplication.getAppInstance().setAttestationGetCredentialOffersUrl(qrPayload.getBaseUrl());
 		} catch (JsonSyntaxException e) {
 			view.showError("Invalid QR code payload", null);
 			return;
 		}
-
 
 
 
@@ -75,43 +77,44 @@ public class ConnectionsListPresenter
 		IndySDK.getInstance().createAndStoreMyDid().thenAccept(new Consumer<DidResults.CreateAndStoreMyDidResult>() {
             @Override
             public void accept(DidResults.CreateAndStoreMyDidResult didResult) {
-                OnboadringRequest request = new OnboadringRequest(didResult.getDid(), didResult.getVerkey());
-
-
+                OnboadringRequest request = new OnboadringRequest(didResult.getDid(), didResult.getVerkey(), qrPayload.token);
 
 
                 // todo add encryption then it will be done on server
-//                String requestString = gson.toJson(request);
-//                model.encryptAnon( qrPayload.verkey, requestString).thenAccept(bytes -> {
-//
-//                }).exceptionally(throwable -> {
-//                    view.hideProgress();
-//                    view.showError(throwable.getMessage(), null);
-//                    return null;
-//                });
+                String requestString = gson.toJson(request);
+                model.encryptAnon( qrPayload.verkey, requestString).thenAccept(bytes -> {
+                	model.sendDIDback(qrPayload.sendbackUrl(), qrPayload.token, bytes, new Callback() {
+						@Override
+						public void onFailure(Call call, IOException e) {
+							view.hideProgress();
+							view.showError(e.getMessage(), null);
+						}
+
+						@Override
+						public void onResponse(Call call, Response response)  {
+							IndySDK.getInstance().connectMyDidWithForeignDid(didResult.getDid(), qrPayload.did);
+
+							view.hideProgress();
+							view.createDialog("Success", "Connection have been created successfully", new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									updateConnections();
+								}
+							});
+						}
+					});
 
 
 
-                model.sendDIDback(qrPayload.sendbackUrl(), qrPayload.token, request, new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        view.hideProgress();
-                        view.showError(e.getMessage(), null);
-                    }
-
-                    @Override
-                    public void onResponse(Call call, Response response)  {
-                        IndySDK.getInstance().connectMyDidWithForeignDid(didResult.getDid(), qrPayload.did);
-
-                    	view.hideProgress();
-                        view.createDialog("Success", "Connection have been created successfully", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                updateConnections();
-                            }
-                        });
-                    }
+                }).exceptionally(throwable -> {
+                    view.hideProgress();
+                    view.showError(throwable.getMessage(), null);
+                    return null;
                 });
+
+
+
+
 
             }
         }).exceptionally(throwable -> {

@@ -9,6 +9,11 @@ public class QRPayload {
 	private String baseUrl;
 	private String path;
 
+
+	public String getBaseUrl() {
+		return baseUrl;
+	}
+
 	public String sendbackUrl(){
 		return baseUrl + path;
 	}

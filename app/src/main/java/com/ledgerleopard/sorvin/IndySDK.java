@@ -4,14 +4,20 @@ import android.text.TextUtils;
 
 import com.google.gson.Gson;
 import com.ledgerleopard.sorvin.model.ConnectionItem;
+import com.ledgerleopard.sorvin.model.SchemaDefinition;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.LibIndy;
+import org.hyperledger.indy.sdk.anoncreds.Anoncreds;
+import org.hyperledger.indy.sdk.anoncreds.AnoncredsResults;
 import org.hyperledger.indy.sdk.crypto.Crypto;
+import org.hyperledger.indy.sdk.crypto.CryptoResults;
 import org.hyperledger.indy.sdk.did.Did;
 import org.hyperledger.indy.sdk.did.DidResults;
+import org.hyperledger.indy.sdk.ledger.Ledger;
+import org.hyperledger.indy.sdk.ledger.LedgerResults;
 import org.hyperledger.indy.sdk.pairwise.Pairwise;
 import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.pool.PoolJSONParameters;
@@ -23,7 +29,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
 
 public class IndySDK implements Library {
 
@@ -37,6 +42,7 @@ public class IndySDK implements Library {
 	private static IndySDK instance;
 	private Wallet wallet;
 	private final Gson gson;
+	private Pool pool;
 
 
 	public static IndySDK getInstance() {
@@ -133,12 +139,40 @@ public class IndySDK implements Library {
 
 	// *********************************************************************************************
 	// DID
-	public void getGovernmentMyDid( IndyCallback<ConnectionItem> callback ) {
-		IndySDK.getInstance().getConnectionsList().thenAccept(connectionItems -> {
-            for (ConnectionItem connectionItem : connectionItems) {
-                if ( connectionItem.connectionName.compareToIgnoreCase(GOVERNMENT_CONNECTION_NAME) == 0){
-                    callback.onDone(connectionItem, null);
+	public CompletableFuture<ConnectionItem> getGovernmentMyDid( ) {
+		return CompletableFuture.supplyAsync(() -> {
+            try {
+                List<ConnectionItem> connectionItems = IndySDK.getInstance().getConnectionsList().get();
+                for (ConnectionItem connectionItem : connectionItems) {
+                    if ( connectionItem.connectionName.compareToIgnoreCase(GOVERNMENT_CONNECTION_NAME) == 0) {
+                        return connectionItem;
+                    }
                 }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            }
+
+            return null;
+        });
+	}
+
+	public CompletableFuture<String> getVerKeyForDidLocal( String did ) {
+		return CompletableFuture.supplyAsync(() -> {
+            try {
+                return Did.keyForLocalDid(wallet, did).get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (IndyException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
             }
         });
 	}
@@ -162,32 +196,29 @@ public class IndySDK implements Library {
 	}
 
 	public CompletableFuture<Void> connectMyDidWithForeignDid(String myDid, String foreignDid ){
-		return CompletableFuture.supplyAsync(new Supplier<Void>() {
-			@Override
-			public Void get() {
-				try {
-					// check if foreign key already stored in wallet
-					if ( !checkIfTheirDidAlreadyStored(foreignDid) ){
-						Did.storeTheirDid(wallet, String.format("{\"did\":\"%s\"}", foreignDid)).get();
-					}
+		return CompletableFuture.supplyAsync(() -> {
+            try {
+                // check if foreign key already stored in wallet
+                if ( !checkIfTheirDidAlreadyStored(foreignDid) ){
+                    Did.storeTheirDid(wallet, String.format("{\"did\":\"%s\"}", foreignDid)).get();
+                }
 
-					if ( !Pairwise.isPairwiseExists(wallet, foreignDid).get() ){
-						Pairwise.createPairwise(wallet, foreignDid, myDid, GOVERNMENT_CONNECTION_NAME).get();
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					throw new RuntimeException(e.getMessage());
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-					throw new RuntimeException(e.getMessage());
-				} catch (IndyException e) {
-					e.printStackTrace();
-					throw new RuntimeException(e.getMessage());
-				}
+                if ( !Pairwise.isPairwiseExists(wallet, foreignDid).get() ){
+                    Pairwise.createPairwise(wallet, foreignDid, myDid, GOVERNMENT_CONNECTION_NAME).get();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (IndyException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            }
 
-				return null;
-			}
-		});
+            return null;
+        });
 
 
 	}
@@ -281,6 +312,59 @@ public class IndySDK implements Library {
 		});
 	}
 
+	public CompletableFuture<byte[]> decrypt( String verKey, byte[] message ) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				return Crypto.anonDecrypt(wallet, verKey, message).get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+		});
+	}
+
+	public CompletableFuture<byte[]> decryptAuth( String verKey, byte[] message ) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				CryptoResults.AuthDecryptResult authDecryptResult = Crypto.authDecrypt(wallet, verKey, message).get();
+				return authDecryptResult.getDecryptedMessage();
+
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+		});
+	}
+
+	public CompletableFuture<byte[]> encryptAuth( String senderVerKey, String receiverVerKey, byte[] message ) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				return Crypto.authCrypt(wallet, senderVerKey, receiverVerKey, message).get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+		});
+	}
+
 	public CompletableFuture<byte[]> sign( String verKey, String message ) {
 		return CompletableFuture.supplyAsync(() -> {
 			try {
@@ -312,8 +396,8 @@ public class IndySDK implements Library {
                 PoolJSONParameters.CreatePoolLedgerConfigJSONParameter createPoolLedgerConfigJSONParameter
                         = new PoolJSONParameters.CreatePoolLedgerConfigJSONParameter(configFile.getAbsolutePath());
                 Pool.createPoolLedgerConfig(fileName, createPoolLedgerConfigJSONParameter.toJson()).get();
-                Pool.openPoolLedger(fileName, null).get();
-            }  catch (InterruptedException e) {
+				pool = Pool.openPoolLedger(fileName, null).get();
+			}  catch (InterruptedException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e.getMessage());
             } catch (ExecutionException e) {
@@ -345,4 +429,48 @@ public class IndySDK implements Library {
 			return null;
 		});
 	}
+
+    // *********************************************************************************************
+    // REQUEST
+    public CompletableFuture<AnoncredsResults.ProverCreateCredentialRequestResult> createOfferRequest(String credDefId){
+		return getGovernmentMyDid().thenApplyAsync(connectionItem -> {
+            try {
+                String credentialOffer = Anoncreds.issuerCreateCredentialOffer(wallet, credDefId).get();
+                String masterSecret = Anoncreds.proverCreateMasterSecret(wallet, null).get();
+                return Anoncreds.proverCreateCredentialReq(wallet, connectionItem.myId, credentialOffer, credDefId, masterSecret).get();
+            } catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+        });
+    }
+
+	// *********************************************************************************************
+	// LEDGER
+	public CompletableFuture<SchemaDefinition> getSchemaAttributes(String schemaId){
+		return getGovernmentMyDid().thenApplyAsync(connectionItem -> {
+            try {
+                String schemaRequest = Ledger.buildGetSchemaRequest(connectionItem.myId, schemaId).get();
+				String response = Ledger.submitRequest(pool, schemaRequest).get();
+                LedgerResults.ParseResponseResult parseResponseResult = Ledger.parseGetSchemaResponse(response).get();
+				return gson.fromJson(parseResponseResult.getObjectJson(), SchemaDefinition.class);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            } catch (IndyException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            }
+        });
+	}
+
 }

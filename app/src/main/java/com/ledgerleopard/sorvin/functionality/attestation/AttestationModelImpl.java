@@ -8,8 +8,11 @@ import com.ledgerleopard.sorvin.api.response.GetCredentialOfferResponse;
 import com.ledgerleopard.sorvin.basemvp.IndyBaseModel;
 import com.ledgerleopard.sorvin.model.ConnectionItem;
 
+import java.util.concurrent.CompletableFuture;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.logging.HttpLoggingInterceptor;
 
 public class AttestationModelImpl extends IndyBaseModel implements AttestationContract.Model {
 
@@ -17,7 +20,12 @@ public class AttestationModelImpl extends IndyBaseModel implements AttestationCo
 
     public AttestationModelImpl(Context context) {
         super(context);
-        httpClient = new OkHttpClient();
+
+        HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
+        httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        //builder.addInterceptor(httpLoggingInterceptor);
+        httpClient = builder.build();
     }
 
 
@@ -25,10 +33,14 @@ public class AttestationModelImpl extends IndyBaseModel implements AttestationCo
     public void getCredentialOffers(String url, String authDid, BaseApiCallback<GetCredentialOfferResponse> callback) {
         Request request = new Request.Builder()
                 .addHeader("Authorization", String.format("DID %s", authDid))
-                .url(url)
+                .addHeader("Content-Type", "application/octa-stream")
+                .addHeader("Accept", "application/octa-stream")
+                .url(url+"/credentials")
+                .get()
                 .build();
 
         httpClient.newCall(request).enqueue(callback);
+
     }
 
     @Override
@@ -37,7 +49,7 @@ public class AttestationModelImpl extends IndyBaseModel implements AttestationCo
     }
 
     @Override
-    public void getGovernmentMyDid( IndySDK.IndyCallback<ConnectionItem> callback ) {
-        IndySDK.getInstance().getGovernmentMyDid(callback);
+    public CompletableFuture<ConnectionItem> getGovernmentMyDid() {
+        return IndySDK.getInstance().getGovernmentMyDid();
     }
 }

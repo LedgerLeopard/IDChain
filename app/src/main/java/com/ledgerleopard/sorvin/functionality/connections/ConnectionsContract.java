@@ -2,7 +2,6 @@ package com.ledgerleopard.sorvin.functionality.connections;
 
 import android.content.Intent;
 
-import com.ledgerleopard.sorvin.api.request.OnboadringRequest;
 import com.ledgerleopard.sorvin.basemvp.BaseContract;
 import com.ledgerleopard.sorvin.basemvp.IndyBaseModelInterface;
 import com.ledgerleopard.sorvin.model.ConnectionItem;
@@ -27,6 +26,6 @@ public interface ConnectionsContract {
 	}
 
 	interface Model extends IndyBaseModelInterface {
-		void sendDIDback(String url, String tokenHeader, OnboadringRequest requestBody, Callback callback);
+		void sendDIDback(String url, String tokenHeader, byte[] requestBody, Callback callback);
 	}
 }
