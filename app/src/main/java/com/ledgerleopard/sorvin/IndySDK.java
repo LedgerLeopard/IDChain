@@ -1,13 +1,12 @@
 package com.ledgerleopard.sorvin;
 
 import android.text.TextUtils;
-
+import android.util.Log;
 import com.google.gson.Gson;
 import com.ledgerleopard.sorvin.model.ConnectionItem;
 import com.ledgerleopard.sorvin.model.SchemaDefinition;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
-
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.LibIndy;
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds;
@@ -160,10 +159,12 @@ public class IndySDK implements Library {
         });
 	}
 
+
 	public CompletableFuture<String> getVerKeyForDidLocal( String did ) {
 		return CompletableFuture.supplyAsync(() -> {
             try {
-                return Did.keyForLocalDid(wallet, did).get();
+	            String res = Did.keyForLocalDid(wallet, did).get();
+	            return res;
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e.getMessage());
@@ -175,6 +176,24 @@ public class IndySDK implements Library {
                 throw new RuntimeException(e.getMessage());
             }
         });
+	}
+
+	public CompletableFuture<String> getVerKeyForDidFromLedger( String did ) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				String res = Did.keyForDid(pool, wallet, did).get();
+				return res;
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+		});
 	}
 
 	public CompletableFuture<DidResults.CreateAndStoreMyDidResult> createAndStoreMyDid( ) {
@@ -195,17 +214,23 @@ public class IndySDK implements Library {
         });
 	}
 
-	public CompletableFuture<Void> connectMyDidWithForeignDid(String myDid, String foreignDid ){
+	public CompletableFuture<Boolean> connectMyDidWithForeignDid(String myDid, String theirDid, String theirVerKey ){
 		return CompletableFuture.supplyAsync(() -> {
             try {
                 // check if foreign key already stored in wallet
-                if ( !checkIfTheirDidAlreadyStored(foreignDid) ){
-                    Did.storeTheirDid(wallet, String.format("{\"did\":\"%s\"}", foreignDid)).get();
+                if ( !checkIfTheirDidAlreadyStored(theirDid) ){
+                    Did.storeTheirDid(wallet, String.format("{\"did\":\"%s\",\"verkey\":\"%s\"}", theirDid, theirVerKey)).get();
                 }
 
-                if ( !Pairwise.isPairwiseExists(wallet, foreignDid).get() ){
-                    Pairwise.createPairwise(wallet, foreignDid, myDid, GOVERNMENT_CONNECTION_NAME).get();
+                if ( !Pairwise.isPairwiseExists(wallet, theirDid).get() ){
+                    Pairwise.createPairwise(wallet, theirDid, myDid, GOVERNMENT_CONNECTION_NAME).get();
                 }
+
+                // just to verify that we have put verkey and did
+	            String savedVerKey = Did.keyForLocalDid(wallet, theirDid).get();
+                return savedVerKey.equals(theirVerKey);
+
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e.getMessage());
@@ -216,11 +241,7 @@ public class IndySDK implements Library {
                 e.printStackTrace();
                 throw new RuntimeException(e.getMessage());
             }
-
-            return null;
         });
-
-
 	}
 
 	/**
@@ -272,8 +293,9 @@ public class IndySDK implements Library {
                     sb.deleteCharAt(sb.indexOf("\""));
                     sb.deleteCharAt(sb.lastIndexOf("\""));
 
+                    String result = sb.toString().replace("}\",\"{", "},{");
 
-                    ConnectionItem[] connectionItemsAr = gson.fromJson(sb.toString(), ConnectionItem[].class);
+                    ConnectionItem[] connectionItemsAr = gson.fromJson(result, ConnectionItem[].class);
                     return Arrays.asList(connectionItemsAr);
                 } else {
                     return new ArrayList<>();
@@ -351,7 +373,8 @@ public class IndySDK implements Library {
 	public CompletableFuture<byte[]> encryptAuth( String senderVerKey, String receiverVerKey, byte[] message ) {
 		return CompletableFuture.supplyAsync(() -> {
 			try {
-				return Crypto.authCrypt(wallet, senderVerKey, receiverVerKey, message).get();
+				byte[] bytes = Crypto.authCrypt(wallet, senderVerKey, receiverVerKey, message).get();
+				return bytes;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				throw new RuntimeException(e.getMessage());
@@ -432,12 +455,19 @@ public class IndySDK implements Library {
 
     // *********************************************************************************************
     // REQUEST
-    public CompletableFuture<AnoncredsResults.ProverCreateCredentialRequestResult> createOfferRequest(String credDefId){
+    public CompletableFuture<AnoncredsResults.ProverCreateCredentialRequestResult> createOfferRequest(String credDefId, String credentialOffer, String schemaId){
 		return getGovernmentMyDid().thenApplyAsync(connectionItem -> {
             try {
-                String credentialOffer = Anoncreds.issuerCreateCredentialOffer(wallet, credDefId).get();
+	            // get detailed information about credDefIf from ledger
+            	String credDefRequest = Ledger.buildGetCredDefRequest(connectionItem.myId, credDefId).get();
+	            String response = Ledger.submitRequest(pool, credDefRequest).get();
+	            LedgerResults.ParseResponseResult credDefIdResponse = Ledger.parseGetCredDefResponse(response).get();
+
+	            // making request
                 String masterSecret = Anoncreds.proverCreateMasterSecret(wallet, null).get();
-                return Anoncreds.proverCreateCredentialReq(wallet, connectionItem.myId, credentialOffer, credDefId, masterSecret).get();
+	            AnoncredsResults.ProverCreateCredentialRequestResult proverCreateCredentialRequestResult = Anoncreds.proverCreateCredentialReq(wallet, connectionItem.myId, credentialOffer, credDefIdResponse.getObjectJson(), masterSecret).get();
+	            Log.e("","");
+	            return proverCreateCredentialRequestResult;
             } catch (InterruptedException e) {
 				e.printStackTrace();
 				throw new RuntimeException(e.getMessage());
@@ -450,6 +480,25 @@ public class IndySDK implements Library {
 			}
         });
     }
+
+	public CompletableFuture<String> storeCredentials(String credentialName, String credReqMetadataJson, String credJson, String credDefJson ){
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				String credentialID = Anoncreds.proverStoreCredential(wallet, credentialName, credReqMetadataJson, credJson, credDefJson, null).get();
+				return credentialID;
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+		});
+
+	}
 
 	// *********************************************************************************************
 	// LEDGER
@@ -472,5 +521,4 @@ public class IndySDK implements Library {
             }
         });
 	}
-
 }

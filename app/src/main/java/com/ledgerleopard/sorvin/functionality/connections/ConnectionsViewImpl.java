@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
-
 import com.ledgerleopard.sorvin.R;
 import com.ledgerleopard.sorvin.basemvp.BaseActivity;
 import com.ledgerleopard.sorvin.functionality.addconnection.QRScanningActivity;
@@ -72,7 +71,12 @@ public class ConnectionsViewImpl
 
 	@Override
 	public void showHideNoConnectionsError( boolean visible ) {
-		tvNoItems.setVisibility( visible ? View.VISIBLE : View.GONE);
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				tvNoItems.setVisibility( visible ? View.VISIBLE : View.GONE);
+			}
+		});
 	}
 
 	@Override

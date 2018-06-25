@@ -3,16 +3,15 @@ package com.ledgerleopard.sorvin.api;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
-
+import android.util.Log;
 import com.google.gson.Gson;
 import com.ledgerleopard.sorvin.IndySDK;
+import okhttp3.Call;
+import okhttp3.Response;
 
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.util.concurrent.ExecutionException;
-
-import okhttp3.Call;
-import okhttp3.Response;
 
 public abstract class BaseApiCallback<RETURN_TYPE> implements okhttp3.Callback {
 
@@ -56,11 +55,22 @@ public abstract class BaseApiCallback<RETURN_TYPE> implements okhttp3.Callback {
                             .getActualTypeArguments()[0];
 
             RETURN_TYPE res = new Gson().fromJson(bodyString, return_typeClass);
-            new Handler(Looper.getMainLooper()).post(() -> onSuccess(res));
+	        String finalBodyString = bodyString;
+	        new Handler(Looper.getMainLooper()).post(() -> onSuccess(res, finalBodyString));
+
+
+	        StringBuilder logString = new StringBuilder()
+		        .append(call.request().method())
+		        .append(" ")
+		        .append(call.request().url().toString())
+		        .append("\n")
+		        .append(finalBodyString);
+
+	        Log.e("HTTP", logString.toString());
 
         }
     }
 
-    public abstract void onSuccess(RETURN_TYPE response);
+    public abstract void onSuccess(RETURN_TYPE response, String rawResponse);
     public abstract void onFailure(String message);
 }

@@ -2,7 +2,6 @@ package com.ledgerleopard.sorvin.functionality.actions;
 
 import android.content.Context;
 import android.content.Intent;
-
 import com.ledgerleopard.sorvin.IndySDK;
 import com.ledgerleopard.sorvin.R;
 import com.ledgerleopard.sorvin.basemvp.BaseActivity;
@@ -10,8 +9,11 @@ import com.ledgerleopard.sorvin.functionality.addconnection.PresenterStub;
 import com.ledgerleopard.sorvin.functionality.attestation.AttestationActivity;
 import com.ledgerleopard.sorvin.functionality.connections.ConnectionsViewImpl;
 import com.ledgerleopard.sorvin.functionality.pool.PoolListActivity;
+import com.ledgerleopard.sorvin.utils.Utils;
 
+import java.io.File;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class ActionsActivity extends BaseActivity<PresenterStub> {
 
@@ -38,9 +40,33 @@ public class ActionsActivity extends BaseActivity<PresenterStub> {
             if ( !IndySDK.getInstance().isWalletExist() ){
                 IndySDK.getInstance().createAndOpenWallet();
             }
-            hideProgress();
+        }).thenAccept(new Consumer<Void>() {
+	        @Override
+	        public void accept(Void aVoid) {
+		        File configFile = Utils.writeConfigToTempFile(ActionsActivity.this, "oleg_pool.txn");
+		        IndySDK.getInstance().deletePoolConfig(configFile.getName()).thenAccept(new Consumer<Void>() {
+			        @Override
+			        public void accept(Void aVoid) {
+				        createAndOpenPool(configFile);
+			        }
+		        }).exceptionally(throwable -> {
+			        createAndOpenPool(configFile);
+			        return null;
+		        });
+	        }
         });
     }
+
+	private void createAndOpenPool(File configFile) {
+		IndySDK.getInstance().createAndOpenPoolFromConfigFile(configFile).thenAccept(Void -> {
+			hideProgress();
+			createDialog(getString(R.string.commons_warning), "Wallet initialized.",null);
+		}).exceptionally(throwable -> {
+			hideProgress();
+			showError(throwable.getMessage(), null);
+			return null;
+		});
+	}
 
     @Override
     protected void onDestroy() {

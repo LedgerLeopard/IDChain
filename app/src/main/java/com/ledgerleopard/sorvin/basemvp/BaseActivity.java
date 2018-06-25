@@ -11,13 +11,16 @@ import android.provider.Settings;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import com.ledgerleopard.sorvin.R;
 
@@ -143,6 +146,31 @@ public abstract class BaseActivity<PRESENTER extends BaseContract.IBasePresenter
 		dialog.setCanceledOnTouchOutside(false);
 		dialog.show();
 	}
+
+	public void createEditableDialog( String editHint, String editTextContent, String error, String okName, String cancelName ){
+		if ((dialog != null && dialog.isShowing()) )
+			dialog.dismiss();
+
+		View inflatedView = LayoutInflater.from(this).inflate(R.layout.dialog_edittext, null);
+		TextInputLayout tilEditText = inflatedView.findViewById(R.id.tilEditText);
+		if (!TextUtils.isEmpty(editHint))
+			tilEditText.setHint(editHint);
+
+		if (!TextUtils.isEmpty(editTextContent))
+			tilEditText.getEditText().setText(editTextContent);
+
+
+		Button btnCancel = inflatedView.findViewById(R.id.btnCancel);
+		Button btnOk = inflatedView.findViewById(R.id.btnOk);
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
+		builder.setView(inflatedView);
+	}
+
+	interface IEditDialog {
+    	void onFinish( String text);
+	}
+
 
     @Override
     public void showError(CharSequence commonText, DialogInterface.OnClickListener okClick) {

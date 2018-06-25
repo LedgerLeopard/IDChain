@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.text.TextUtils;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.ledgerleopard.sorvin.IDChainApplication;
@@ -13,15 +12,13 @@ import com.ledgerleopard.sorvin.api.request.OnboadringRequest;
 import com.ledgerleopard.sorvin.basemvp.BasePresenter;
 import com.ledgerleopard.sorvin.functionality.addconnection.QRScanningActivity;
 import com.ledgerleopard.sorvin.model.QRPayload;
-
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 import org.hyperledger.indy.sdk.did.DidResults;
 
 import java.io.IOException;
 import java.util.function.Consumer;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Response;
 
 public class ConnectionsListPresenter
 	extends BasePresenter<ConnectionsContract.View, ConnectionsContract.Model, ConnectionsViewModel>
@@ -61,7 +58,6 @@ public class ConnectionsListPresenter
 			return;
 		}
 
-
 		try {
 			qrPayload = gson.fromJson(qrContent, QRPayload.class);
 			IDChainApplication.getAppInstance().setAttestationGetCredentialOffersUrl(qrPayload.getBaseUrl());
@@ -70,8 +66,6 @@ public class ConnectionsListPresenter
 			return;
 		}
 
-
-
 		// Generate DID
 		view.showProgress("Creating connection", false, null);
 		IndySDK.getInstance().createAndStoreMyDid().thenAccept(new Consumer<DidResults.CreateAndStoreMyDidResult>() {
@@ -79,8 +73,6 @@ public class ConnectionsListPresenter
             public void accept(DidResults.CreateAndStoreMyDidResult didResult) {
                 OnboadringRequest request = new OnboadringRequest(didResult.getDid(), didResult.getVerkey(), qrPayload.token);
 
-
-                // todo add encryption then it will be done on server
                 String requestString = gson.toJson(request);
                 model.encryptAnon( qrPayload.verkey, requestString).thenAccept(bytes -> {
                 	model.sendDIDback(qrPayload.sendbackUrl(), qrPayload.token, bytes, new Callback() {
@@ -91,8 +83,8 @@ public class ConnectionsListPresenter
 						}
 
 						@Override
-						public void onResponse(Call call, Response response)  {
-							IndySDK.getInstance().connectMyDidWithForeignDid(didResult.getDid(), qrPayload.did);
+						public void onResponse(Call call, Response response) {
+							IndySDK.getInstance().connectMyDidWithForeignDid(didResult.getDid(), qrPayload.did, qrPayload.verkey);
 
 							view.hideProgress();
 							view.createDialog("Success", "Connection have been created successfully", new DialogInterface.OnClickListener() {
@@ -111,11 +103,6 @@ public class ConnectionsListPresenter
                     view.showError(throwable.getMessage(), null);
                     return null;
                 });
-
-
-
-
-
             }
         }).exceptionally(throwable -> {
             view.hideProgress();
@@ -129,7 +116,7 @@ public class ConnectionsListPresenter
 		updateConnections();
 	}
 
-	private void updateConnections(){
+	private void updateConnections() {
 		view.showProgress(false, null);
 		model.getConnectionsList().thenAccept(connectionItems -> {
             view.hideProgress();

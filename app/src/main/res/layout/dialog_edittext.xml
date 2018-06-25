@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+                                             android:layout_width="match_parent"
+                                             android:layout_height="match_parent">
+	<android.support.design.widget.TextInputLayout
+			android:id="@+id/tilEditText"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			>
+		<EditText
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				/>
+	</android.support.design.widget.TextInputLayout>
+
+	<LinearLayout
+			android:orientation="horizontal"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			>
+		<Button
+				android:layout_weight="1"
+				android:id="@+id/btnCancel"
+				android:backgroundTint="@color/colorAccent"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="@string/commons_cancel"
+				/>
+
+		<Button
+				android:layout_weight="1"
+				android:id="@+id/btnOk"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Ok"
+				/>
+	</LinearLayout>
+
+</LinearLayout>
