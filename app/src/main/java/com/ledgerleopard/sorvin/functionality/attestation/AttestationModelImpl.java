@@ -47,7 +47,7 @@ public class AttestationModelImpl extends IndyBaseModel implements AttestationCo
     public void sendCredentialOfferRequest( String url, String authDid, String bodyContent, BaseApiCallback<PostCredentialOfferResponse> callback) {
     	RequestBody body = RequestBody.create(MediaType.parse("application/json"), String.format("{\"credRequest\":%s}", bodyContent));
     	Request request = new Request.Builder()
-		    //.addHeader("Authorization", String.format("DID %s", authDid))
+		    .addHeader("Authorization", String.format("DID %s", authDid))
 		    .url(url+"/credentials")
 		    .post(body)
 		    .build();

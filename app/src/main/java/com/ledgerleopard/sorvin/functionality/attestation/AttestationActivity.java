@@ -92,7 +92,7 @@ public class AttestationActivity extends BaseActivity<AttestationContract.Presen
         TextView tvSchemaAttributes = dialogView.findViewById(R.id.tvSchemaAttributes);
         for (String attrName : schema.attrNames) {
             tvSchemaAttributes.append(attrName);
-            tvSchemaAttributes.append("\n");
+            tvSchemaAttributes.append("\n\n");
         }
 
         runOnUiThread(() -> builder.create().show());

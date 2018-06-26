@@ -458,7 +458,7 @@ public class IndySDK implements Library {
     public CompletableFuture<AnoncredsResults.ProverCreateCredentialRequestResult> createOfferRequest(String credDefId, String credentialOffer, String schemaId){
 		return getGovernmentMyDid().thenApplyAsync(connectionItem -> {
             try {
-	            // get detailed information about credDefIf from ledger
+	            // get detailed information about credDefId from ledger
             	String credDefRequest = Ledger.buildGetCredDefRequest(connectionItem.myId, credDefId).get();
 	            String response = Ledger.submitRequest(pool, credDefRequest).get();
 	            LedgerResults.ParseResponseResult credDefIdResponse = Ledger.parseGetCredDefResponse(response).get();

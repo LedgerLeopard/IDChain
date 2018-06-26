@@ -71,7 +71,8 @@ public class AttestationsPresenterImpl
 			            model.sendCredentialOfferRequest(IDChainApplication.getAppInstance().getAttestationGetCredentialOffersUrl(), connectionItem.myId, proverCreateCredentialRequestResult.getCredentialRequestJson(), new BaseApiCallback<PostCredentialOfferResponse>(null) {
 				            @Override
 				            public void onSuccess(PostCredentialOfferResponse response, String rawResponse) {
-					            view.createDialog("Info", "Success = " + response.toString(), null);
+					            view.hideProgress();
+				            	view.createDialog("Success", rawResponse, null);
 					            //IndySDK.getInstance().storeCredentials("")
 				            }
 
