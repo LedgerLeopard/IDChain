@@ -11,15 +11,14 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-
 import com.ledgerleopard.sorvin.R;
-import com.ledgerleopard.sorvin.basemvp.BaseActivity;
+import com.ledgerleopard.sorvin.basemvp.BaseMVPActivity;
 import com.ledgerleopard.sorvin.model.SchemaDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AttestationActivity extends BaseActivity<AttestationContract.Presenter> implements AttestationContract.View {
+public class AttestationActivity extends BaseMVPActivity<AttestationContract.Presenter> implements AttestationContract.View {
 
     private ListView lvCredentialOffers;
     private List<String> content = new ArrayList<>();

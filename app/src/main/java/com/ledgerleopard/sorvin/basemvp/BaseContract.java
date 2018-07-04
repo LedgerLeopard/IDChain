@@ -25,6 +25,14 @@ public interface BaseContract {
                           DialogInterface.OnClickListener okClick,
                           DialogInterface.OnClickListener cancelClick);
 
+	    void createEditableDialog( String title,
+	                               String editHint,
+	                               String editTextContent,
+	                               String error,
+	                               String okName,
+	                               String cancelName,
+	                               BaseActivity.IEditDialog callback);
+
 	    void showError(CharSequence commonText,
 	                   DialogInterface.OnClickListener okClick);
 

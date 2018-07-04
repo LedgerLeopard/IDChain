@@ -1,8 +1,8 @@
 package com.ledgerleopard.sorvin.functionality.attestation;
 
 import com.ledgerleopard.sorvin.api.BaseApiCallback;
+import com.ledgerleopard.sorvin.api.response.BaseResponse;
 import com.ledgerleopard.sorvin.api.response.GetCredentialOfferResponse;
-import com.ledgerleopard.sorvin.api.response.PostCredentialOfferResponse;
 import com.ledgerleopard.sorvin.basemvp.BaseContract;
 import com.ledgerleopard.sorvin.basemvp.BaseViewModel;
 import com.ledgerleopard.sorvin.basemvp.IndyBaseModelInterface;
@@ -28,7 +28,7 @@ public interface AttestationContract {
 
     interface Model extends IndyBaseModelInterface {
         void getCredentialOffers(String url, String authDid, BaseApiCallback<GetCredentialOfferResponse> callback);
-        void sendCredentialOfferRequest( String url, String authDid, String body, BaseApiCallback<PostCredentialOfferResponse> callback);
+        void sendCredentialOfferRequest( String url, String authDid, String body, BaseApiCallback<BaseResponse> callback);
         CompletableFuture<ConnectionItem> getGovernmentMyDid();
     }
 }

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.text.TextUtils;
+import android.util.Base64;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.ledgerleopard.sorvin.IDChainApplication;
@@ -75,7 +76,9 @@ public class ConnectionsListPresenter
 
                 String requestString = gson.toJson(request);
                 model.encryptAnon( qrPayload.verkey, requestString).thenAccept(bytes -> {
-                	model.sendDIDback(qrPayload.sendbackUrl(), qrPayload.token, bytes, new Callback() {
+	                String encode64Result = Base64.encodeToString(bytes, Base64.NO_WRAP);
+
+                	model.sendDIDback(qrPayload.sendbackUrl(), qrPayload.token, encode64Result, new Callback() {
 						@Override
 						public void onFailure(Call call, IOException e) {
 							view.hideProgress();
@@ -84,6 +87,8 @@ public class ConnectionsListPresenter
 
 						@Override
 						public void onResponse(Call call, Response response) {
+
+
 							IndySDK.getInstance().connectMyDidWithForeignDid(didResult.getDid(), qrPayload.did, qrPayload.verkey);
 
 							view.hideProgress();

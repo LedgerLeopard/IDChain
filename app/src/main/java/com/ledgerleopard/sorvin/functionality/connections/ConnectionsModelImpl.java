@@ -23,8 +23,8 @@ public class ConnectionsModelImpl extends IndyBaseModel implements ConnectionsCo
     }
 
     @Override
-    public void sendDIDback(String url, String token, byte[] requestBody, Callback callback) {
-        RequestBody body = RequestBody.create(MediaType.parse("application/octa-stream"), requestBody);
+    public void sendDIDback(String url, String token, String requestBody, Callback callback) {
+        RequestBody body = RequestBody.create(MediaType.parse("text/plain"), requestBody);
         Request request = new Request.Builder()
                 .url(url)
                 .put(body)

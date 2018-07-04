@@ -10,10 +10,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-
 import com.ledgerleopard.sorvin.IndySDK;
 import com.ledgerleopard.sorvin.R;
-import com.ledgerleopard.sorvin.basemvp.BaseActivity;
+import com.ledgerleopard.sorvin.basemvp.BaseMVPActivity;
 import com.ledgerleopard.sorvin.functionality.addconnection.PresenterStub;
 import com.ledgerleopard.sorvin.utils.Utils;
 
@@ -22,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class PoolListActivity extends BaseActivity<PresenterStub> {
+public class PoolListActivity extends BaseMVPActivity<PresenterStub> {
 
     private ListView lvConfigurations;
     private List<String> content = new ArrayList<>();

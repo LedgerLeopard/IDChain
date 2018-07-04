@@ -12,3 +12,4 @@ public class PostCredentialOfferResponse extends BaseResponse {
 		public String revRegDefId;
 	}
 }
+

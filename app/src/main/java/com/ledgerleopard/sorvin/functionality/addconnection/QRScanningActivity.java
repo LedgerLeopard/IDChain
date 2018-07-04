@@ -5,13 +5,13 @@ import android.content.Intent;
 import android.graphics.PointF;
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView;
 import com.ledgerleopard.sorvin.R;
-import com.ledgerleopard.sorvin.basemvp.BaseActivity;
+import com.ledgerleopard.sorvin.basemvp.BaseMVPActivity;
 
 /**
  * Created by mbp15 on 09.07.17.
  */
 
-public class QRScanningActivity extends BaseActivity implements QRCodeReaderView.OnQRCodeReadListener {
+public class QRScanningActivity extends BaseMVPActivity implements QRCodeReaderView.OnQRCodeReadListener {
 
     public static final String RESULT_QR_STRING = "RESULT_QR_STRING";
     private QRCodeReaderView qrCodeReaderView;

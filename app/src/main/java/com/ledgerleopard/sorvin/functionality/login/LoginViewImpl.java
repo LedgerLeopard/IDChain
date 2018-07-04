@@ -4,11 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AlertDialog;
 import com.ledgerleopard.sorvin.R;
-import com.ledgerleopard.sorvin.basemvp.BaseActivity;
+import com.ledgerleopard.sorvin.basemvp.BaseMVPActivity;
 import com.ledgerleopard.sorvin.functionality.actions.ActionsActivity;
 import com.ledgerleopard.sorvin.utils.SharedPreferenceStorage;
 
-public class LoginViewImpl extends BaseActivity<LoginContract.ILoginPresenter>
+public class LoginViewImpl extends BaseMVPActivity<LoginContract.ILoginPresenter>
 	implements LoginContract.ILoginView {
 
 	private AlertDialog touchIdDialog;

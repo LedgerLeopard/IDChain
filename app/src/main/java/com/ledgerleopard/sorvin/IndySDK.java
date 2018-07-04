@@ -23,6 +23,7 @@ import org.hyperledger.indy.sdk.pool.PoolJSONParameters;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +37,7 @@ public class IndySDK implements Library {
 	protected static final String TYPE = "default";
 	protected static final String GOVERNMENT_CONNECTION_NAME = "Government connection";
 	protected static final String credentials = "{\"key\": \"\"}";
+	protected static final String TAG = IndySDK.class.getCanonicalName();
 
 
 	private static IndySDK instance;
@@ -290,8 +292,8 @@ public class IndySDK implements Library {
                 if (resString.compareToIgnoreCase("[]") != 0){
                     resString = resString.replace("\\", "");
                     StringBuilder sb = new StringBuilder(resString);
-                    sb.deleteCharAt(sb.indexOf("\""));
-                    sb.deleteCharAt(sb.lastIndexOf("\""));
+	                sb.deleteCharAt(sb.indexOf("\""));
+	                sb.deleteCharAt(sb.lastIndexOf("\""));
 
                     String result = sb.toString().replace("}\",\"{", "},{");
 
@@ -373,7 +375,10 @@ public class IndySDK implements Library {
 	public CompletableFuture<byte[]> encryptAuth( String senderVerKey, String receiverVerKey, byte[] message ) {
 		return CompletableFuture.supplyAsync(() -> {
 			try {
+				String originalMessage = new String(message, Charset.forName("utf-8"));
+
 				byte[] bytes = Crypto.authCrypt(wallet, senderVerKey, receiverVerKey, message).get();
+				Log.e(TAG, "");
 				return bytes;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -497,7 +502,21 @@ public class IndySDK implements Library {
 				throw new RuntimeException(e.getMessage());
 			}
 		});
+	}
 
+	public CompletableFuture<String> getAllCredentials() {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				Anoncreds.proverGetCredentials(wallet, "").get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			} catch (IndyException e) {
+				e.printStackTrace();
+			}
+			return null;
+		});
 	}
 
 	// *********************************************************************************************

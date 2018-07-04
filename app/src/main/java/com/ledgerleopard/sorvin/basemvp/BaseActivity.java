@@ -16,6 +16,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +29,7 @@ import com.ledgerleopard.sorvin.R;
  * Created by sergeybrazhnik on 25.01.18.
  */
 
-public abstract class BaseActivity<PRESENTER extends BaseContract.IBasePresenter> extends AppCompatActivity implements BaseContract.IBaseView{
+public abstract class BaseActivity extends AppCompatActivity implements BaseContract.IBaseView{
 
 	private final int REQUEST_PERMISSION_FIRST = 101;
 	private final int REQUEST_PERMISSION_SECOND = 102;
@@ -40,14 +41,9 @@ public abstract class BaseActivity<PRESENTER extends BaseContract.IBasePresenter
 	private ProgressDialog pd;
     private AlertDialog dialog;
     private InputMethodManager imm;
-    protected PRESENTER presenter;
     protected LayoutInflater inflater;
 	protected Toolbar toolbar;
 	private FrameLayout llContent;
-
-	protected abstract void initUI();
-
-    protected abstract void initBack();
 
 
     @Override
@@ -65,9 +61,7 @@ public abstract class BaseActivity<PRESENTER extends BaseContract.IBasePresenter
 
 	    llContent = findViewById(R.id.llContent);
 
-		initBack();
-		initUI();
-		presenter.onStart();
+
 	}
 
 	@Override
@@ -147,7 +141,7 @@ public abstract class BaseActivity<PRESENTER extends BaseContract.IBasePresenter
 		dialog.show();
 	}
 
-	public void createEditableDialog( String editHint, String editTextContent, String error, String okName, String cancelName ){
+	public void createEditableDialog( String title, String editHint, String editTextContent, String error, String okName, String cancelName, IEditDialog callback){
 		if ((dialog != null && dialog.isShowing()) )
 			dialog.dismiss();
 
@@ -159,16 +153,37 @@ public abstract class BaseActivity<PRESENTER extends BaseContract.IBasePresenter
 		if (!TextUtils.isEmpty(editTextContent))
 			tilEditText.getEditText().setText(editTextContent);
 
+		if (!TextUtils.isEmpty(error))
+			tilEditText.setError(error);
 
 		Button btnCancel = inflatedView.findViewById(R.id.btnCancel);
+		btnCancel.setOnClickListener(v -> {
+			if ( dialog != null )
+				dialog.dismiss();
+		});
+		if ( !TextUtils.isEmpty(cancelName))
+			btnCancel.setText(cancelName);
+
+
 		Button btnOk = inflatedView.findViewById(R.id.btnOk);
+		btnOk.setOnClickListener(v -> {
+			if ( dialog != null )
+				dialog.dismiss();
+
+			if ( callback != null )
+				callback.onFinish(tilEditText.getEditText().getText());
+		});
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
 		builder.setView(inflatedView);
+		builder.setTitle(title);
+		dialog = builder.create();
+		dialog.setCanceledOnTouchOutside(false);
+		dialog.show();
 	}
 
-	interface IEditDialog {
-    	void onFinish( String text);
+	public interface IEditDialog {
+    	void onFinish( Editable text);
 	}
 
 

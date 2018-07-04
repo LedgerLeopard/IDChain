@@ -92,6 +92,11 @@ dependencies {
         transitive = true;
     }
 
+
+
+	// gson
+	compile 'com.google.code.gson:gson:2.8.0'
+
 	// qr
 	implementation 'com.dlazaro66.qrcodereaderview:qrcodereaderview:2.0.2'
 }

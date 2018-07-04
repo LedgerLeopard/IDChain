@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import com.ledgerleopard.sorvin.IndySDK;
 import com.ledgerleopard.sorvin.R;
-import com.ledgerleopard.sorvin.basemvp.BaseActivity;
+import com.ledgerleopard.sorvin.basemvp.BaseMVPActivity;
 import com.ledgerleopard.sorvin.functionality.addconnection.PresenterStub;
 import com.ledgerleopard.sorvin.functionality.attestation.AttestationActivity;
 import com.ledgerleopard.sorvin.functionality.connections.ConnectionsViewImpl;
@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public class ActionsActivity extends BaseActivity<PresenterStub> {
+public class ActionsActivity extends BaseMVPActivity<PresenterStub> {
 
     public static void start( Context context){
         context.startActivity( new Intent(context, ActionsActivity.class) );

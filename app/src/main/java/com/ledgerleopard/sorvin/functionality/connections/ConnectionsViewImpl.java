@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
 import com.ledgerleopard.sorvin.R;
-import com.ledgerleopard.sorvin.basemvp.BaseActivity;
+import com.ledgerleopard.sorvin.basemvp.BaseMVPActivity;
 import com.ledgerleopard.sorvin.functionality.addconnection.QRScanningActivity;
 import com.ledgerleopard.sorvin.model.ConnectionItem;
 
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConnectionsViewImpl
-	extends BaseActivity<ConnectionsContract.Presenter>
+	extends BaseMVPActivity<ConnectionsContract.Presenter>
 	implements ConnectionsContract.View {
 
 	public final int QR_SCAN_REQUEST_CODE = 1;

@@ -3,14 +3,17 @@ package com.ledgerleopard.sorvin.api;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.ledgerleopard.sorvin.IndySDK;
 import okhttp3.Call;
 import okhttp3.Response;
 
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
+import java.nio.charset.Charset;
 import java.util.concurrent.ExecutionException;
 
 public abstract class BaseApiCallback<RETURN_TYPE> implements okhttp3.Callback {
@@ -33,12 +36,12 @@ public abstract class BaseApiCallback<RETURN_TYPE> implements okhttp3.Callback {
         if (!response.isSuccessful()) {
             onFailure(response.body().string());
         } else {
-
-
             String bodyString = null;
             if (!TextUtils.isEmpty(decryptVerKey)) {
                 try {
-                    byte[] decryptedContent = IndySDK.getInstance().decryptAuth(decryptVerKey, response.body().bytes()).get();
+                	// decode it first
+	                byte[] decode64 = Base64.decode(response.body().bytes(), Base64.NO_WRAP);
+                    byte[] decryptedContent = IndySDK.getInstance().decryptAuth(decryptVerKey, decode64).get();
                     bodyString = new String(decryptedContent, "utf-8");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -46,7 +49,7 @@ public abstract class BaseApiCallback<RETURN_TYPE> implements okhttp3.Callback {
                     e.printStackTrace();
                 }
             } else {
-                bodyString = response.body().string();
+            	bodyString = new String(Base64.decode(response.body().bytes(), Base64.NO_WRAP), Charset.forName("utf-8"));
             }
 
             Class<RETURN_TYPE> return_typeClass = (Class<RETURN_TYPE>)
@@ -54,9 +57,17 @@ public abstract class BaseApiCallback<RETURN_TYPE> implements okhttp3.Callback {
                             .getGenericSuperclass())
                             .getActualTypeArguments()[0];
 
-            RETURN_TYPE res = new Gson().fromJson(bodyString, return_typeClass);
+
+	        RETURN_TYPE res = null;
+	        try {
+		        res = new Gson().fromJson(bodyString, return_typeClass);
+	        } catch (JsonSyntaxException e) {
+		        e.printStackTrace();
+	        }
 	        String finalBodyString = bodyString;
-	        new Handler(Looper.getMainLooper()).post(() -> onSuccess(res, finalBodyString));
+	        RETURN_TYPE finalRes = res;
+
+	        new Handler(Looper.getMainLooper()).post(() -> onSuccess(finalRes, finalBodyString));
 
 
 	        StringBuilder logString = new StringBuilder()
