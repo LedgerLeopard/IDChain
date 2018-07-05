@@ -460,7 +460,7 @@ public class IndySDK implements Library {
 
     // *********************************************************************************************
     // REQUEST
-    public CompletableFuture<AnoncredsResults.ProverCreateCredentialRequestResult> createOfferRequest(String credDefId, String credentialOffer, String schemaId){
+    public CompletableFuture<CreateOfferRequestResult> createOfferRequest(String credDefId, String credentialOffer){
 		return getGovernmentMyDid().thenApplyAsync(connectionItem -> {
             try {
 	            // get detailed information about credDefId from ledger
@@ -471,8 +471,7 @@ public class IndySDK implements Library {
 	            // making request
                 String masterSecret = Anoncreds.proverCreateMasterSecret(wallet, null).get();
 	            AnoncredsResults.ProverCreateCredentialRequestResult proverCreateCredentialRequestResult = Anoncreds.proverCreateCredentialReq(wallet, connectionItem.myId, credentialOffer, credDefIdResponse.getObjectJson(), masterSecret).get();
-	            Log.e("","");
-	            return proverCreateCredentialRequestResult;
+	            return new CreateOfferRequestResult(credDefIdResponse, proverCreateCredentialRequestResult);
             } catch (InterruptedException e) {
 				e.printStackTrace();
 				throw new RuntimeException(e.getMessage());
@@ -484,6 +483,16 @@ public class IndySDK implements Library {
 				throw new RuntimeException(e.getMessage());
 			}
         });
+    }
+
+    public class CreateOfferRequestResult {
+	    public LedgerResults.ParseResponseResult credDef;
+	    public AnoncredsResults.ProverCreateCredentialRequestResult proverCreateCredentialResult;
+
+	    public CreateOfferRequestResult(LedgerResults.ParseResponseResult credDef, AnoncredsResults.ProverCreateCredentialRequestResult proverCreateCredentialResult) {
+		    this.credDef = credDef;
+		    this.proverCreateCredentialResult = proverCreateCredentialResult;
+	    }
     }
 
 	public CompletableFuture<String> storeCredentials(String credentialName, String credReqMetadataJson, String credJson, String credDefJson ){
@@ -507,7 +516,8 @@ public class IndySDK implements Library {
 	public CompletableFuture<String> getAllCredentials() {
 		return CompletableFuture.supplyAsync(() -> {
 			try {
-				Anoncreds.proverGetCredentials(wallet, "").get();
+				String result = Anoncreds.proverGetCredentials(wallet, "{}").get();
+				return result;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {

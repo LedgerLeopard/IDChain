@@ -52,6 +52,10 @@
             android:name=".functionality.attestation.AttestationActivity"
             android:screenOrientation="portrait" />
 
+	    <activity
+			    android:name=".functionality.credentials.CredentialsList"
+			    android:screenOrientation="portrait" />
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="7f74ef579a3810b1a79c75373f70319ac87e3569" />

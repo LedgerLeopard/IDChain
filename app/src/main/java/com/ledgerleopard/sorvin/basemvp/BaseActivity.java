@@ -170,8 +170,12 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseCont
 			if ( dialog != null )
 				dialog.dismiss();
 
-			if ( callback != null )
-				callback.onFinish(tilEditText.getEditText().getText());
+			if ( TextUtils.isEmpty(tilEditText.getEditText().getText()) ){
+				tilEditText.getEditText().setError("Field should not be empty");
+			} else {
+				if ( callback != null )
+					callback.onFinish(tilEditText.getEditText().getText());
+			}
 		});
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(BaseActivity.this);
