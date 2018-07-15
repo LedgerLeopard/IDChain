@@ -56,6 +56,15 @@
 				android:text="Credentials"
 				/>
 
+		<Button
+				android:id="@+id/btnVerification"
+				style="@style/PrimaryButton"
+				android:layout_marginTop="10dp"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Verification"
+				/>
+
 	</LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

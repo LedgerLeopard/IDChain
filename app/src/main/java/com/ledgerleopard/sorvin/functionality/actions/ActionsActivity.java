@@ -10,6 +10,7 @@ import com.ledgerleopard.sorvin.functionality.attestation.AttestationActivity;
 import com.ledgerleopard.sorvin.functionality.connections.ConnectionsViewImpl;
 import com.ledgerleopard.sorvin.functionality.credentials.CredentialsList;
 import com.ledgerleopard.sorvin.functionality.pool.PoolListActivity;
+import com.ledgerleopard.sorvin.functionality.verification.VerificationActivity;
 import com.ledgerleopard.sorvin.utils.Utils;
 
 import java.io.File;
@@ -31,6 +32,7 @@ public class ActionsActivity extends BaseMVPActivity<PresenterStub> {
         findViewById(R.id.btnConnections).setOnClickListener(view -> ConnectionsViewImpl.start(ActionsActivity.this));
         findViewById(R.id.btnAttestation).setOnClickListener(view -> AttestationActivity.start(ActionsActivity.this));
         findViewById(R.id.btnCredentials).setOnClickListener(view -> CredentialsList.start(ActionsActivity.this));
+        findViewById(R.id.btnVerification).setOnClickListener(view -> VerificationActivity.start(ActionsActivity.this));
     }
 
     @Override

@@ -529,6 +529,25 @@ public class IndySDK implements Library {
 		});
 	}
 
+	public CompletableFuture<String> getCredentialsForProofRequest( String proofRequest ) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				//String inner = "{\"nonce\":\"123432421212\",\"name\":\"Loan-Application-Basic\",\"version\":\"0.1\",\"requested_attributes\":{\"attr1_referent\":{\"name\":\"givenname@http://schema.org/text\"},\"attr2_referent\":{\"name\":\"surname@http://schema.org/text\",\"restrictions\":[{\"cred_def_id\":\"7d1trfrU7BbE3pZ85hMZGX:3:CL:30\"}]},\"attr3_referent\":{\"name\":\"bsn@https://nl.wikipedia.org/wiki/burgerservicenummer\"}},\"requested_predicates\":{}}";
+				//String innerWithUnknownAttribute = "{\"nonce\":\"123432421212\",\"name\":\"Loan-Application-Basic\",\"version\":\"0.1\",\"requested_attributes\":{\"attr1_referent\":{\"name\":\"givenname@http://schema.org/text\"},\"attr2_referent\":{\"name\":\"surname@http://schema.org/text\",\"restrictions\":[{\"cred_def_id\":\"7d1trfrU7BbE3pZ85hMZGX:3:CL:30\"}]},\"attr3_referent\":{\"name\":\"bsn@https://nl.wikipedia.org/wiki/burgerservicenummer\"},\"attr4_referent\":{\"name\":\"CUSTOM_ATTRIBUTE\"}},\"requested_predicates\":{}}";
+
+				String result = Anoncreds.proverGetCredentialsForProofReq(wallet, proofRequest).get();
+				return result;
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			} catch (IndyException e) {
+				e.printStackTrace();
+			}
+			return null;
+		});
+	}
+
 	// *********************************************************************************************
 	// LEDGER
 	public CompletableFuture<SchemaDefinition> getSchemaAttributes(String schemaId){
