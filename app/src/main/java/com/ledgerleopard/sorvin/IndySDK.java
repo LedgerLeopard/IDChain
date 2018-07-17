@@ -4,7 +4,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import com.google.gson.Gson;
 import com.ledgerleopard.sorvin.model.ConnectionItem;
-import com.ledgerleopard.sorvin.model.SchemaDefinition;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.hyperledger.indy.sdk.IndyException;
@@ -470,6 +469,8 @@ public class IndySDK implements Library {
 
 	            // making request
                 String masterSecret = Anoncreds.proverCreateMasterSecret(wallet, null).get();
+
+
 	            AnoncredsResults.ProverCreateCredentialRequestResult proverCreateCredentialRequestResult = Anoncreds.proverCreateCredentialReq(wallet, connectionItem.myId, credentialOffer, credDefIdResponse.getObjectJson(), masterSecret).get();
 	            return new CreateOfferRequestResult(credDefIdResponse, proverCreateCredentialRequestResult);
             } catch (InterruptedException e) {
@@ -532,9 +533,6 @@ public class IndySDK implements Library {
 	public CompletableFuture<String> getCredentialsForProofRequest( String proofRequest ) {
 		return CompletableFuture.supplyAsync(() -> {
 			try {
-				//String inner = "{\"nonce\":\"123432421212\",\"name\":\"Loan-Application-Basic\",\"version\":\"0.1\",\"requested_attributes\":{\"attr1_referent\":{\"name\":\"givenname@http://schema.org/text\"},\"attr2_referent\":{\"name\":\"surname@http://schema.org/text\",\"restrictions\":[{\"cred_def_id\":\"7d1trfrU7BbE3pZ85hMZGX:3:CL:30\"}]},\"attr3_referent\":{\"name\":\"bsn@https://nl.wikipedia.org/wiki/burgerservicenummer\"}},\"requested_predicates\":{}}";
-				//String innerWithUnknownAttribute = "{\"nonce\":\"123432421212\",\"name\":\"Loan-Application-Basic\",\"version\":\"0.1\",\"requested_attributes\":{\"attr1_referent\":{\"name\":\"givenname@http://schema.org/text\"},\"attr2_referent\":{\"name\":\"surname@http://schema.org/text\",\"restrictions\":[{\"cred_def_id\":\"7d1trfrU7BbE3pZ85hMZGX:3:CL:30\"}]},\"attr3_referent\":{\"name\":\"bsn@https://nl.wikipedia.org/wiki/burgerservicenummer\"},\"attr4_referent\":{\"name\":\"CUSTOM_ATTRIBUTE\"}},\"requested_predicates\":{}}";
-
 				String result = Anoncreds.proverGetCredentialsForProofReq(wallet, proofRequest).get();
 				return result;
 			} catch (InterruptedException e) {
@@ -550,13 +548,12 @@ public class IndySDK implements Library {
 
 	// *********************************************************************************************
 	// LEDGER
-	public CompletableFuture<SchemaDefinition> getSchemaAttributes(String schemaId){
+	public CompletableFuture<LedgerResults.ParseResponseResult> getSchemaAttributes(String schemaId){
 		return getGovernmentMyDid().thenApplyAsync(connectionItem -> {
             try {
                 String schemaRequest = Ledger.buildGetSchemaRequest(connectionItem.myId, schemaId).get();
 				String response = Ledger.submitRequest(pool, schemaRequest).get();
-                LedgerResults.ParseResponseResult parseResponseResult = Ledger.parseGetSchemaResponse(response).get();
-				return gson.fromJson(parseResponseResult.getObjectJson(), SchemaDefinition.class);
+                return Ledger.parseGetSchemaResponse(response).get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e.getMessage());
@@ -568,5 +565,49 @@ public class IndySDK implements Library {
                 throw new RuntimeException(e.getMessage());
             }
         });
+	}
+
+	public CompletableFuture<LedgerResults.ParseResponseResult> getCredDefDetails(String credDefId){
+		return getGovernmentMyDid().thenApplyAsync(connectionItem -> {
+			try {
+				// get detailed information about credDefId from ledger
+				String credDefRequest = Ledger.buildGetCredDefRequest(connectionItem.myId, credDefId).get();
+				String response = Ledger.submitRequest(pool, credDefRequest).get();
+				return Ledger.parseGetCredDefResponse(response).get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			} catch (IndyException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e.getMessage());
+			}
+		});
+	}
+
+	public CompletableFuture<String> proverCreateProof(
+		String proofRequest,
+		String requestedCredentials,
+		String schemas,
+		String credentialDefs,
+		String revStates)
+	{
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				String masterSecret = Anoncreds.proverCreateMasterSecret(wallet, null).get();
+				String proof = Anoncreds.proverCreateProof(wallet, proofRequest, requestedCredentials, masterSecret, schemas, credentialDefs, revStates).get();
+				return proof;
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			} catch (IndyException e) {
+				e.printStackTrace();
+			}
+			return null;
+		});
+
 	}
 }

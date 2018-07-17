@@ -16,6 +16,7 @@ import com.ledgerleopard.sorvin.basemvp.BaseViewModel;
 import com.ledgerleopard.sorvin.model.ConnectionItem;
 import com.ledgerleopard.sorvin.model.CredentialOffer;
 import com.ledgerleopard.sorvin.model.SchemaDefinition;
+import org.hyperledger.indy.sdk.ledger.LedgerResults;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -51,13 +52,15 @@ public class AttestationsPresenterImpl
     @Override
     public void onDialodDetailsClicked() {
         view.showProgress(false, null);
-        IndySDK.getInstance().getSchemaAttributes(currentResponse.offersList.get(currentPosition).schema_id).thenAccept(new Consumer<SchemaDefinition>() {
-            @Override
-            public void accept(SchemaDefinition s) {
-                view.hideProgress();
-                view.showSchemaDialog(s);
-            }
-        });
+
+	    IndySDK.getInstance().getSchemaAttributes(currentResponse.offersList.get(currentPosition).schema_id).thenAccept(new Consumer<LedgerResults.ParseResponseResult>() {
+		    @Override
+		    public void accept(LedgerResults.ParseResponseResult parseResponseResult) {
+			    SchemaDefinition res = new Gson().fromJson(parseResponseResult.getObjectJson(), SchemaDefinition.class);
+			    view.hideProgress();
+			    view.showSchemaDialog(res);
+		    }
+	    });
     }
 
     @Override
